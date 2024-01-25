@@ -16,6 +16,10 @@ in {
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
 
   options.services.pacemaker = {
+    corosyncKeyPath = mkOption {
+      type = types.path;
+    };
+
     clusterName = mkOption {
       type = types.str;
       default = cfgCoro.clusterName;
@@ -32,6 +36,10 @@ in {
       enable = true;
       clusterName = mkIf (cfg.clusterName != cfgCoro.clusterName) cfg.clusterName;
       nodelist = mkIf (cfg.nodes != cfgCoro.nodelist) cfg.nodes;
+    };
+
+    environment.etc."corosync/authkey" = {
+      source = cfg.corosyncKeyPath;
     };
 
     # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
