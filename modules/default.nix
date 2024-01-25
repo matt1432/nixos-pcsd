@@ -6,7 +6,16 @@
   self,
   ...
 }: let
-  inherit (lib) concatMapStringsSep elemAt mdDoc mkIf mkOption types;
+  inherit
+    (lib)
+    concatMapStringsSep
+    concatStringsSep
+    elemAt
+    mdDoc
+    mkIf
+    mkOption
+    types
+    ;
   inherit (builtins) typeOf;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
@@ -56,6 +65,41 @@ in {
     clusterUserHashedPassword = mkOption {
       type = types.str;
     };
+
+    virtualIps = mkOption {
+      default = [];
+      type = with types;
+        attrsOf (submodule {
+          options = {
+            id = mkOption {
+              type = types.str;
+              default = name;
+            };
+
+            interface = mkOption {
+              default = "eno1";
+              type = types.str;
+            };
+
+            ip = mkOption {
+              type = types.str;
+            };
+
+            cidr = mkOption {
+              default = 24;
+              type = types.int;
+            };
+
+            extraArgs = mkOption {
+              type = with types; listOf str;
+              default = [];
+              description = mdDoc ''
+                Additional command line options to pcs when making a VIP
+              '';
+            };
+          };
+        });
+    };
   };
 
   config = mkIf cfg.enable {
@@ -76,7 +120,21 @@ in {
       hashedPassword = cfg.clusterUserHashedPassword;
     };
 
-    systemd.services = {
+    systemd.services = let
+      host = elemAt cfgCoro.nodelist cfg.mainNodeIndex;
+      nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
+
+      mkVirtIp = vip:
+        concatStringsSep " " [
+          "pcs resource create ${vip.id}"
+          "ocf:heartbeat:IPaddr2"
+          "ip=${vip.id}"
+          "cidr_netmask=${toString vip.cidr}"
+          "nic=${vip.interface}"
+          "op monitor interval=30s"
+        ]
+        ++ vip.extraArgs;
+    in {
       "pcsd.service".enable = true;
 
       "pcsd-ruby.service".enable = true;
@@ -91,20 +149,15 @@ in {
 
         path = with pkgs; [pacemaker cfg.pcsPackage];
 
-        script = let
-          host = elemAt cfgCoro.nodelist cfg.mainNodeIndex;
-          nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
-        in
-          /*
-          bash
-          */
-          ''
-            # The config needs to be installed from one node only
-            if [ "$(uname -n)" = ${host} ]; then
-                pcs host auth ${nodeNames} -u ${cfg.clusterUser}
-                pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
-            fi
-          '';
+        script = ''
+          # The config needs to be installed from one node only
+          if [ "$(uname -n)" = ${host} ]; then
+              pcs host auth ${nodeNames} -u ${cfg.clusterUser}
+              pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+
+              ${concatMapStringsSep "\n" mkVirtIp cfg.virtualIps}
+          fi
+        '';
       };
     };
 
