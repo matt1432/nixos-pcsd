@@ -2,6 +2,7 @@
   config,
   lib,
   nixpkgs-pacemaker,
+  self,
   ...
 }: let
   inherit (lib) mkIf;
@@ -12,5 +13,8 @@ in {
   disabledModules = [pacemakerPath];
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
 
-  config = mkIf cfg.enable {};
+  config = mkIf cfg.enable {
+    # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
+    nixpkgs.overlays = [self.overlays.default];
+  };
 }

@@ -18,6 +18,7 @@
   outputs = inputs @ {
     self,
     nixpkgs,
+    nixpkgs-pacemaker,
     ...
   }: let
     # As of right now, pacemaker only works on this arch
@@ -34,6 +35,14 @@
       pcs = pkgs.callPackage ./pkgs pkgs;
       default = self.packages.${system}.pcs;
     });
+
+    overlays = final: prev: {
+      inherit
+        (nixpkgs-pacemaker.legacyPackages.x86_64-linux)
+        pacemaker
+        ocf-resource-agents
+        ;
+    };
 
     nixosModules = {
       pacemaker = import ./modules inputs;
