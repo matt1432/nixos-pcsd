@@ -1,0 +1,60 @@
+GEM
+  remote: https://rubygems.org/
+  specs:
+    backports (3.24.1)
+    base64 (0.2.0)
+    childprocess (5.0.0)
+    ethon (0.16.0)
+      ffi (>= 1.15.0)
+    ffi (1.16.3)
+    json (2.7.1)
+    mustermann (3.0.0)
+      ruby2_keywords (~> 0.0.1)
+    nio4r (2.7.0)
+    power_assert (2.0.3)
+    puma (6.4.2)
+      nio4r (~> 2.0)
+    rack (3.0.8)
+    rack-protection (4.0.0)
+      base64 (>= 0.1.0)
+      rack (>= 3.0.0, < 4)
+    rack-session (2.0.0)
+      rack (>= 3.0.0)
+    rack-test (2.1.0)
+      rack (>= 1.3)
+    rexml (3.2.6)
+    ruby2_keywords (0.0.5)
+    sinatra (4.0.0)
+      mustermann (~> 3.0)
+      rack (>= 3.0.0, < 4)
+      rack-protection (= 4.0.0)
+      rack-session (>= 2.0.0, < 3)
+      tilt (~> 2.0)
+    test-unit (3.6.1)
+      power_assert
+    tilt (2.3.0)
+
+PLATFORMS
+  x86_64-linux
+
+DEPENDENCIES
+  backports
+  childprocess
+  ethon
+  ffi
+  json
+  mustermann
+  nio4r
+  power_assert
+  puma
+  rack
+  rack-protection
+  rack-test
+  rexml
+  ruby2_keywords
+  sinatra
+  test-unit
+  tilt
+
+BUNDLED WITH
+   2.3.26
