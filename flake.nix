@@ -30,9 +30,15 @@
       in
         attrs system pkgs);
   in {
-    packages = perSystem (_: pkgs: {
-      default = pkgs.callPackage ./pkgs pkgs;
+    packages = perSystem (system: pkgs: {
+      pcs = pkgs.callPackage ./pkgs pkgs;
+      default = self.packages.${system}.pcs;
     });
+
+    nixosModules = {
+      pacemaker = import ./modules inputs;
+      default = self.nixosModules.pacemaker;
+    };
 
     formatter = perSystem (_: pkgs: pkgs.alejandra);
 
