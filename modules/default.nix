@@ -16,7 +16,8 @@ in {
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
 
   options.services.pacemaker = {
-    corosyncKeyPath = mkOption {
+    # Corosync options
+    corosyncKeyFile = mkOption {
       type = types.path;
     };
 
@@ -29,9 +30,26 @@ in {
       type = typeOf cfgCoro.nodelist;
       default = cfgCoro.nodelist;
     };
+
+    # PCS options
+    pcsPackage = mkOption {
+      type = types.package;
+      default = self.packages.x86-64_linux.default;
+    };
+
+    clusterUser = mkOption {
+      type = types.str;
+      default = "hacluster";
+    };
+
+    # TODO: add password file option
+    clusterUserHashedPassword = mkOption {
+      type = types.str;
+    };
   };
 
   config = mkIf cfg.enable {
+    # Corosync
     services.corosync = {
       enable = true;
       clusterName = mkIf (cfg.clusterName != cfgCoro.clusterName) cfg.clusterName;
@@ -39,7 +57,13 @@ in {
     };
 
     environment.etc."corosync/authkey" = {
-      source = cfg.corosyncKeyPath;
+      source = cfg.corosyncKeyFile;
+    };
+
+    # PCS
+    environment.systemPackages = [cfg.pcsPackage];
+    users.users.${cfg.clusterUser} = {
+      hashedPassword = cfg.clusterUserHashedPassword;
     };
 
     # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
