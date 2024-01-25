@@ -95,7 +95,6 @@ in
 
     autoreconfPhase = ''
       ./autogen.sh
-      ls -ah
     '';
 
     configureFlags = ["--with-distro=debian"];
@@ -113,12 +112,7 @@ in
       ]);
 
     installPhase = ''
-      install -Dm644 "pcsd/pcsd-ruby.service" "$out/lib/systemd/system/pcsd-ruby.service"
-      install -Dm644 "pcsd/pcsd.service" "$out/lib/systemd/system/pcsd.service"
-
-      mkdir -p $out/man/man8
-      cp -v pcs/pcs.8 $out/man/man8/
-      cp -v pcsd/pcsd.8 $out/man/man8/
-
+      make
+      make install
     '';
   }
