@@ -1,0 +1,44 @@
+{
+  "nodes": {
+    "nixpkgs": {
+      "locked": {
+        "lastModified": 1705856552,
+        "narHash": "sha256-JXfnuEf5Yd6bhMs/uvM67/joxYKoysyE3M2k6T3eWbg=",
+        "owner": "NixOS",
+        "repo": "nixpkgs",
+        "rev": "612f97239e2cc474c13c9dafa0df378058c5ad8d",
+        "type": "github"
+      },
+      "original": {
+        "owner": "NixOS",
+        "ref": "nixos-unstable",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "nixpkgs-pacemaker": {
+      "locked": {
+        "lastModified": 1691894234,
+        "narHash": "sha256-AlBJ1EDwQNVFRxblWVsOu+7WSYmlq8KutLULpikPB2I=",
+        "owner": "mitchty",
+        "repo": "nixpkgs",
+        "rev": "c51014d54a39a2277eac3a72ddbdf33e22c972f5",
+        "type": "github"
+      },
+      "original": {
+        "owner": "mitchty",
+        "ref": "corosync-pacemaker-ocf",
+        "repo": "nixpkgs",
+        "type": "github"
+      }
+    },
+    "root": {
+      "inputs": {
+        "nixpkgs": "nixpkgs",
+        "nixpkgs-pacemaker": "nixpkgs-pacemaker"
+      }
+    }
+  },
+  "root": "root",
+  "version": 7
+}
