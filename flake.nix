@@ -36,14 +36,6 @@
       default = self.packages.${system}.pcs;
     });
 
-    overlays = final: prev: {
-      inherit
-        (nixpkgs-pacemaker.legacyPackages.x86_64-linux)
-        pacemaker
-        ocf-resource-agents
-        ;
-    };
-
     nixosModules = {
       pacemaker = import ./modules nixpkgs-pacemaker self;
       default = self.nixosModules.pacemaker;

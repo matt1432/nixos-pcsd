@@ -278,6 +278,14 @@ in {
 
     # Overlays that fix some bugs
     # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
-    nixpkgs.overlays = [self.overlays.default];
+    nixpkgs.overlays = [
+      (final: prev: {
+        inherit
+          (nixpkgs-pacemaker.legacyPackages.x86_64-linux)
+          pacemaker
+          ocf-resource-agents
+          ;
+      })
+    ];
   };
 }
