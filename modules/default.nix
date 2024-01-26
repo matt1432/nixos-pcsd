@@ -257,6 +257,7 @@ in {
     in
       {
         "pcsd".enable = true;
+        "pcsd-ruby".preStart = "mkdir -p /var/lib/pcsd";
 
         "pacemaker-setup" = {
           after = [
