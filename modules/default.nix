@@ -285,6 +285,8 @@ in {
             # Set password on user
             echo ${cfg.clusterUser}:{$PASSWORD} | chpasswd
 
+            # FIXME: it needs to be restarted the first time you do it
+
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p {$PASSWORD}
