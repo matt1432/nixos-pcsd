@@ -73,7 +73,7 @@ in {
     # PCS options
     pcsPackage = mkOption {
       type = types.package;
-      default = self.packages.x86-64_linux.default;
+      default = self.packages.x86_64-linux.default;
     };
 
     clusterUser = mkOption {
