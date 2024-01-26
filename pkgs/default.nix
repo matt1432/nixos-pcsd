@@ -70,6 +70,13 @@ in
       substituteInPlace $sourceRoot/configure.ac \
         --replace 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
         AC_SUBST([SYSTEMD_UNIT_DIR])"
+
+      # Don't create var files
+      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
+        '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd' ""
+
+      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
+	      '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd' ""
     '';
 
     propagatedBuildInputs =
@@ -115,6 +122,7 @@ in
       "--enable-use-local-cache-only"
       "--with-pcs-lib-dir=${placeholder "out"}/lib"
       "--with-default-config-dir=${placeholder "out"}/etc"
+      "--localstatedir=/var"
     ];
 
     buildInputs =
