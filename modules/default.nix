@@ -1,9 +1,7 @@
-{
+nixpkgs-pacemaker: self: {
   config,
   lib,
-  nixpkgs-pacemaker,
   pkgs,
-  self,
   ...
 }: let
   inherit

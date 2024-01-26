@@ -15,7 +15,7 @@
     };
   };
 
-  outputs = inputs @ {
+  outputs = {
     self,
     nixpkgs,
     nixpkgs-pacemaker,
@@ -45,7 +45,7 @@
     };
 
     nixosModules = {
-      pacemaker = import ./modules inputs;
+      pacemaker = import ./modules nixpkgs-pacemaker self;
       default = self.nixosModules.pacemaker;
     };
 
