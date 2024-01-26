@@ -197,6 +197,13 @@ in {
     };
 
     # PCS
+    security.pam.services.pcsd.text = ''
+      #%PAM-1.0
+      auth       include      systemd-user
+      account    include      systemd-user
+      password   include      systemd-user
+      session    include      systemd-user
+    '';
     environment.systemPackages = [cfg.pcsPackage];
 
     # FIXME: this is definitely not how you do it

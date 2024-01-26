@@ -123,7 +123,7 @@ in
     '';
 
     configureFlags = [
-      "--with-distro=debian"
+      "--with-distro=fedora"
       "--enable-use-local-cache-only"
       "--with-pcs-lib-dir=${placeholder "out"}/lib"
       "--with-default-config-dir=${placeholder "out"}/etc"
