@@ -169,8 +169,8 @@ in {
     # Corosync
     services.corosync = {
       enable = true;
-      clusterName = mkIf (cfg.clusterName != cfgCoro.clusterName) cfg.clusterName;
-      nodelist = mkIf (cfg.nodes != cfgCoro.nodelist) cfg.nodes;
+      clusterName = mkForce cfg.clusterName;
+      nodelist = mkForce cfg.nodes;
     };
 
     environment.etc."corosync/authkey" = {
