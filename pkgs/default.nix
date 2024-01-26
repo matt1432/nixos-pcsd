@@ -1,7 +1,6 @@
 {
   autoconf,
   automake,
-  autoreconfHook,
   bundlerEnv,
   coreutils,
   corosync,
@@ -17,7 +16,6 @@
   python3Packages,
   ruby,
   systemd,
-  wget,
   lib,
   ...
 }: let
@@ -94,7 +92,6 @@ in
     nativeBuildInputs = [
       autoconf
       automake
-      autoreconfHook
       nss.tools
       pkg-config
       psmisc
@@ -102,14 +99,16 @@ in
       rubyEnv.wrappedRuby
       rubyEnv.bundler
       systemd
-      wget
     ];
 
-    autoreconfPhase = ''
+    preConfigure = ''
       ./autogen.sh
     '';
 
-    configureFlags = ["--with-distro=debian"];
+    configureFlags = [
+      "--with-distro=debian"
+      "--enable-use-local-cache-only"
+    ];
 
     buildInputs =
       [
