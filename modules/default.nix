@@ -200,7 +200,7 @@ in {
     };
 
     systemd.services = let
-      host = elemAt cfg.nodes cfg.mainNodeIndex;
+      host = (elemAt cfg.nodes cfg.mainNodeIndex).name;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
       resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
