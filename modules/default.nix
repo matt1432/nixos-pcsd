@@ -274,7 +274,11 @@ in {
             "pcsd-ruby.service"
           ];
 
-          path = with pkgs; [pacemaker cfg.pcsPackage];
+          path = with pkgs; [
+            pacemaker
+            cfg.pcsPackage
+            shadow
+          ];
           serviceConfig.EnvironmentFile = cfg.clusterUserPasswordFile;
 
           script = ''
