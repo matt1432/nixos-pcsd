@@ -187,7 +187,7 @@ in {
     systemd.services = let
       host = elemAt cfg.nodes cfg.mainNodeIndex;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
-      resEnabled = filterAttrs (n: v: v.enable) cfg.resources;
+      resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
       mkVirtIp = vip:
         concatStringsSep " " [
@@ -274,7 +274,7 @@ in {
         value = {
           wantedBy = mkForce [];
         };
-      }) (attrNames cfg.resources));
+      }) (attrNames cfg.systemdResources));
 
     # Overlays that fix some bugs
     # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
