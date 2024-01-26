@@ -25,7 +25,6 @@ nixpkgs-pacemaker: self: {
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pacemaker;
-  cfgCoro = config.services.corosync;
 in {
   disabledModules = [pacemakerPath];
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
@@ -38,7 +37,7 @@ in {
 
     clusterName = mkOption {
       type = types.str;
-      default = cfgCoro.clusterName;
+      default = "nixcluster";
     };
 
     mainNodeIndex = mkOption {
@@ -51,8 +50,24 @@ in {
     };
 
     nodes = mkOption {
-      type = typeOf cfgCoro.nodelist;
-      default = cfgCoro.nodelist;
+      type = with types;
+        listOf (submodule {
+          options = {
+            nodeid = mkOption {
+              type = int;
+              description = lib.mdDoc "Node ID number";
+            };
+            name = mkOption {
+              type = str;
+              description = lib.mdDoc "Node name";
+            };
+            ring_addrs = mkOption {
+              type = listOf str;
+              description = lib.mdDoc "List of addresses, one for each ring.";
+            };
+          };
+        });
+      default = [];
     };
 
     # PCS options
