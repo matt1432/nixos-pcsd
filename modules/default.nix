@@ -16,6 +16,7 @@
     filterAttrs
     length
     mdDoc
+    mkForce
     mkIf
     mkOption
     optionals
@@ -181,6 +182,7 @@ in {
     # PCS
     environment.systemPackages = [cfg.pcsPackage];
     users.users.${cfg.clusterUser} = {
+      isSystemUser = true;
       hashedPassword = cfg.clusterUserHashedPassword;
     };
 
@@ -272,7 +274,7 @@ in {
       // listToAttrs (map (x: {
         name = x;
         value = {
-          wantedBy = lib.mkForce [];
+          wantedBy = mkForce [];
         };
       }) (attrNames cfg.resources));
 
