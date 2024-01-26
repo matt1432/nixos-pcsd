@@ -65,6 +65,10 @@ in
 
       # Fix systemd path
       substituteInPlace $sourceRoot/configure.ac \
+        --replace 'PCS_PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix], [/usr])' "COROEXECPREFIX=${corosync}
+        AC_SUBST([COROEXECPREFIX])"
+
+      substituteInPlace $sourceRoot/configure.ac \
         --replace 'PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])' "PCMKEXECPREFIX=${pacemaker}
         AC_SUBST([PCMKEXECPREFIX])"
 
