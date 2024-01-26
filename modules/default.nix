@@ -205,15 +205,14 @@ in {
       resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
       mkVirtIp = vip:
-        concatStringsSep " " [
+        concatStringsSep " " ([
           "pcs resource create ${vip.id}"
           "ocf:heartbeat:IPaddr2"
           "ip=${vip.id}"
           "cidr_netmask=${toString vip.cidr}"
           "nic=${vip.interface}"
           "op monitor interval=30s"
-        ]
-        ++ (optionals (!(isNull vip.group)) [
+        ] ++ (optionals (!(isNull vip.group)) [
           "--group ${vip.group}"
 
           (optionalString
@@ -229,11 +228,10 @@ in {
               " "
               (v: "--before ${v}")
               vip.startBefore))
-        ])
-        ++ vip.extraArgs;
+        ]) ++ vip.extraArgs);
 
       mkSystemdResource = res:
-        concatStringsSep " " [
+        concatStringsSep " " ([
           "pcs resource create ${res.systemdName}"
           "systemd id=${res.systemdName}"
         ]
@@ -254,7 +252,7 @@ in {
               (v: "--before ${v}")
               res.startBefore))
         ])
-        ++ res.extraArgs;
+        ++ res.extraArgs);
     in
       {
         "pcsd.service".enable = true;
