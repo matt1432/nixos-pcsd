@@ -65,6 +65,11 @@ in
 
       substituteInPlace $sourceRoot/pcs/lib/resource_agent/xml.py \
         --replace '"/usr/bin",' '"/usr/bin", "${lib.getBin pacemaker}",'
+
+      # Fix systemd path
+      substituteInPlace $sourceRoot/configure.ac \
+        --replace 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
+        AC_SUBST([SYSTEMD_UNIT_DIR])"
     '';
 
     propagatedBuildInputs =
@@ -108,6 +113,8 @@ in
     configureFlags = [
       "--with-distro=debian"
       "--enable-use-local-cache-only"
+      "--with-pcs-lib-dir=${placeholder "out"}/lib"
+      "--with-default-config-dir=${placeholder "out"}/etc"
     ];
 
     buildInputs =
@@ -125,19 +132,5 @@ in
     installPhase = ''
       make
       make install
-
-      # FIXME: I can't figure out how to have make put these in the right place
-      install -Dm644 "pcs/snmp/pcs_snmp_agent.service" "$out/lib/systemd/system/pcs_snmp_agent.service"
-      install -Dm644 "pcsd/pcsd-ruby.service" "$out/lib/systemd/system/pcsd-ruby.service"
-      install -Dm644 "pcsd/pcsd.service" "$out/lib/systemd/system/pcsd.service"
-
-      substituteInPlace "$out/lib/systemd/system/pcs_snmp_agent.service" \
-        --replace "\''${prefix}" "$out"
-
-      substituteInPlace "$out/lib/systemd/system/pcsd-ruby.service" \
-        --replace "\''${prefix}" "$out"
-
-      substituteInPlace "$out/lib/systemd/system/pcsd.service" \
-        --replace "\''${prefix}" "$out"
     '';
   }
