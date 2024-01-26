@@ -283,7 +283,7 @@ in {
 
           script = ''
             # Set password on user
-            chpasswd ${cfg.clusterUser}:{$PASSWORD}
+            echo ${cfg.clusterUser}:{$PASSWORD} | chpasswd
 
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
