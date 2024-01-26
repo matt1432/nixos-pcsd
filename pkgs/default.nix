@@ -114,5 +114,10 @@ in
     installPhase = ''
       make
       make install
+
+      # FIXME: I can't figure out how to have make put these in the right place
+      install -Dm644 "pcs/snmp/pcs_snmp_agent.service" "$out/lib/systemd/system/pcs_snmp_agent.service"
+      install -Dm644 "pcsd/pcsd-ruby.service" "$out/lib/systemd/system/pcsd-ruby.service"
+      install -Dm644 "pcsd/pcsd.service" "$out/lib/systemd/system/pcsd.service"
     '';
   }
