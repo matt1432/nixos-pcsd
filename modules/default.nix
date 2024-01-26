@@ -218,17 +218,17 @@ in {
 
           optionalString
           (length vip.startAfter != 0)
-          concatMapStringsSep
-          " "
-          (v: "--after ${v}")
-          vip.startAfter
+          (concatMapStringsSep
+            " "
+            (v: "--after ${v}")
+            vip.startAfter)
 
           optionalString
           (length vip.startBefore != 0)
-          concatMapStringsSep
-          " "
-          (v: "--before ${v}")
-          vip.startBefore
+          (concatMapStringsSep
+            " "
+            (v: "--before ${v}")
+            vip.startBefore)
         ])
         ++ vip.extraArgs;
 
