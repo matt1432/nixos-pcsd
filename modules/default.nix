@@ -277,7 +277,7 @@ in {
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser}
                 pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
-                ${concatMapStringsSep "\n" mkVirtIp cfg.virtualIps}
+                ${concatMapStringsSep "\n" mkVirtIp (attrValues cfg.virtualIps)}
                 ${concatMapStringsSep "\n" mkSystemdResource (attrValues resEnabled)}
             fi
           '';
