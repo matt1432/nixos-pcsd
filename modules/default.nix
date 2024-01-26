@@ -216,19 +216,19 @@ in {
         ++ (optionals (!(isNull vip.group)) [
           "--group ${vip.group}"
 
-          optionalString
-          (length vip.startAfter != 0)
-          (concatMapStringsSep
-            " "
-            (v: "--after ${v}")
-            vip.startAfter)
+          (optionalString
+            (length vip.startAfter != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--after ${v}")
+              vip.startAfter))
 
-          optionalString
-          (length vip.startBefore != 0)
-          (concatMapStringsSep
-            " "
-            (v: "--before ${v}")
-            vip.startBefore)
+          (optionalString
+            (length vip.startBefore != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--before ${v}")
+              vip.startBefore))
         ])
         ++ vip.extraArgs;
 
@@ -240,19 +240,19 @@ in {
         ++ (optionals (!(isNull res.group)) [
           "--group ${res.group}"
 
-          optionalString
-          (length res.startAfter != 0)
-          (concatMapStringsSep
-            " "
-            (v: "--after ${v}")
-            res.startAfter)
+          (optionalString
+            (length res.startAfter != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--after ${v}")
+              res.startAfter))
 
-          optionalString
-          (length res.startBefore != 0)
-          (concatMapStringsSep
-            " "
-            (v: "--before ${v}")
-            res.startBefore)
+          (optionalString
+            (length res.startBefore != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--before ${v}")
+              res.startBefore))
         ])
         ++ res.extraArgs;
     in
