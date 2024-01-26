@@ -8,15 +8,21 @@
 }: let
   inherit
     (lib)
+    attrNames
+    attrValues
     concatMapStringsSep
     concatStringsSep
     elemAt
+    filterAttrs
+    length
     mdDoc
     mkIf
     mkOption
+    optionals
+    optionalString
     types
     ;
-  inherit (builtins) typeOf;
+  inherit (builtins) listToAttrs typeOf;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pacemaker;
@@ -66,8 +72,50 @@ in {
       type = types.str;
     };
 
+    systemdResources = mkOption {
+      default = {};
+      type = with types;
+        attrsOf (submodule {
+          options = {
+            enable = mkOption {
+              default = true;
+              type = types.bool;
+            };
+
+            systemdName = mkOption {
+              default = name;
+              type = types.str;
+            };
+
+            group = mkOption {
+              type = with types; nullOr str;
+            };
+
+            startAfter = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; nullOr listOf str;
+            };
+
+            startBefore = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; nullOr listOf str;
+            };
+
+            extraArgs = mkOption {
+              type = with types; listOf str;
+              default = [];
+              description = mdDoc ''
+                Additional command line options to pcs when making a systemd resource
+              '';
+            };
+          };
+        });
+    };
+
     virtualIps = mkOption {
-      default = [];
+      default = {};
       type = with types;
         attrsOf (submodule {
           options = {
@@ -88,6 +136,22 @@ in {
             cidr = mkOption {
               default = 24;
               type = types.int;
+            };
+
+            group = mkOption {
+              type = with types; nullOr str;
+            };
+
+            startAfter = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; nullOr listOf str;
+            };
+
+            startBefore = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; nullOr listOf str;
             };
 
             extraArgs = mkOption {
@@ -121,8 +185,9 @@ in {
     };
 
     systemd.services = let
-      host = elemAt cfgCoro.nodelist cfg.mainNodeIndex;
+      host = elemAt cfg.nodes cfg.mainNodeIndex;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
+      resEnabled = filterAttrs (n: v: v.enable) cfg.resources;
 
       mkVirtIp = vip:
         concatStringsSep " " [
@@ -133,33 +198,83 @@ in {
           "nic=${vip.interface}"
           "op monitor interval=30s"
         ]
+        ++ (optionals (!(isNull vip.group)) [
+          "--group ${vip.group}"
+
+          optionalString
+          (length vip.startAfter != 0)
+          concatMapStringsSep
+          " "
+          (v: "--after ${v}")
+          vip.startAfter
+
+          optionalString
+          (length vip.startBefore != 0)
+          concatMapStringsSep
+          " "
+          (v: "--before ${v}")
+          vip.startBefore
+        ])
         ++ vip.extraArgs;
-    in {
-      "pcsd.service".enable = true;
 
-      "pcsd-ruby.service".enable = true;
+      mkSystemdResource = res:
+        concatStringsSep " " [
+          "pcs resource create ${res.systemdName}"
+          "systemd id=${res.systemdName}"
+        ]
+        ++ (optionals (!(isNull res.group)) [
+          "--group ${res.group}"
 
-      "pacemaker-setup" = {
-        after = [
-          "corosync.service"
-          "pacemaker.service"
-          "pcsd.service"
-          "pcsd-ruby.service"
-        ];
+          optionalString
+          (length res.startAfter != 0)
+          concatMapStringsSep
+          " "
+          (v: "--after ${v}")
+          res.startAfter
 
-        path = with pkgs; [pacemaker cfg.pcsPackage];
+          optionalString
+          (length res.startBefore != 0)
+          concatMapStringsSep
+          " "
+          (v: "--before ${v}")
+          res.startBefore
+        ])
+        ++ res.extraArgs;
+    in
+      {
+        "pcsd.service".enable = true;
 
-        script = ''
-          # The config needs to be installed from one node only
-          if [ "$(uname -n)" = ${host} ]; then
-              pcs host auth ${nodeNames} -u ${cfg.clusterUser}
-              pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+        "pcsd-ruby.service".enable = true;
 
-              ${concatMapStringsSep "\n" mkVirtIp cfg.virtualIps}
-          fi
-        '';
-      };
-    };
+        "pacemaker-setup" = {
+          after = [
+            "corosync.service"
+            "pacemaker.service"
+            "pcsd.service"
+            "pcsd-ruby.service"
+          ];
+
+          path = with pkgs; [pacemaker cfg.pcsPackage];
+
+          script = ''
+            # The config needs to be installed from one node only
+            if [ "$(uname -n)" = ${host} ]; then
+                pcs host auth ${nodeNames} -u ${cfg.clusterUser}
+                pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+
+                ${concatMapStringsSep "\n" mkVirtIp cfg.virtualIps}
+                ${concatMapStringsSep "\n" mkSystemdResource (attrValues resEnabled)}
+            fi
+          '';
+        };
+      }
+      # Force all systemd units handled by pacemaker to not start automatically
+      // listToAttrs (map (x: {
+        name = x;
+        value = {
+          wantedBy = lib.mkForce [];
+        };
+      }) (attrNames cfg.resources));
 
     # Overlays that fix some bugs
     # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
