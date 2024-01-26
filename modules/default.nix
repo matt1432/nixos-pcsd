@@ -82,8 +82,12 @@ in {
     };
 
     # TODO: add password file option
-    clusterUserHashedPassword = mkOption {
+    clusterUserPasswordFile = mkOption {
       type = types.str;
+      description = mdDoc ''
+        Required path to a file containing a variable like so:
+        PASSWORD=YOURVERYSECUREPASSWORD
+      '';
     };
 
     systemdResources = mkOption {
@@ -199,7 +203,6 @@ in {
     users.users.${cfg.clusterUser} = {
       isSystemUser = true;
       extraGroups = ["haclient"];
-      hashedPassword = cfg.clusterUserHashedPassword;
     };
     users.groups.haclient = {};
 
@@ -272,11 +275,15 @@ in {
           ];
 
           path = with pkgs; [pacemaker cfg.pcsPackage];
+          serviceConfig.EnvironmentFile = cfg.clusterUserPasswordFile;
 
           script = ''
+            # Set password on user
+            chpasswd ${cfg.clusterUser}:{$PASSWORD}
+
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
-                pcs host auth ${nodeNames} -u ${cfg.clusterUser}
+                pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p {$PASSWORD}
                 pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
                 ${concatMapStringsSep "\n" mkVirtIp (attrValues cfg.virtualIps)}
