@@ -63,10 +63,11 @@ in
       substituteInPlace $sourceRoot/pcsd/pcs.rb --replace \
         "/bin/cat" "${lib.getBin coreutils}/bin/cat"
 
-      substituteInPlace $sourceRoot/pcs/lib/resource_agent/xml.py \
-        --replace '"/usr/bin",' '"/usr/bin", "${lib.getBin pacemaker}",'
-
       # Fix systemd path
+      substituteInPlace $sourceRoot/configure.ac \
+        --replace 'PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])' "PCMKEXECPREFIX=${pacemaker}
+        AC_SUBST([PCMKEXECPREFIX])"
+
       substituteInPlace $sourceRoot/configure.ac \
         --replace 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
         AC_SUBST([SYSTEMD_UNIT_DIR])"

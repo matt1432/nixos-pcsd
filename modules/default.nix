@@ -194,10 +194,14 @@ in {
 
     # PCS
     environment.systemPackages = [cfg.pcsPackage];
+
+    # FIXME: this is definitely not how you do it
     users.users.${cfg.clusterUser} = {
       isSystemUser = true;
+      extraGroups = ["haclient"];
       hashedPassword = cfg.clusterUserHashedPassword;
     };
+    users.groups.haclient = {};
 
     systemd.packages = [cfg.pcsPackage];
     systemd.services = let
