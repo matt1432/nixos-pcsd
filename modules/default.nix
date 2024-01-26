@@ -95,13 +95,13 @@ in {
             startAfter = mkOption {
               default = [];
               # TODO: assert possible strings
-              type = with types; nullOr listOf str;
+              type = with types; listOf str;
             };
 
             startBefore = mkOption {
               default = [];
               # TODO: assert possible strings
-              type = with types; nullOr listOf str;
+              type = with types; listOf str;
             };
 
             extraArgs = mkOption {
@@ -146,13 +146,13 @@ in {
             startAfter = mkOption {
               default = [];
               # TODO: assert possible strings
-              type = with types; nullOr listOf str;
+              type = with types; listOf str;
             };
 
             startBefore = mkOption {
               default = [];
               # TODO: assert possible strings
-              type = with types; nullOr listOf str;
+              type = with types; listOf str;
             };
 
             extraArgs = mkOption {
