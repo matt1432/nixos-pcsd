@@ -258,8 +258,6 @@ in {
       {
         "pcsd".enable = true;
 
-        "pcsd-ruby".enable = true;
-
         "pacemaker-setup" = {
           after = [
             "corosync.service"
