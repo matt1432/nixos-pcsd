@@ -256,9 +256,9 @@ in {
         ++ res.extraArgs);
     in
       {
-        "pcsd.service".enable = true;
+        "pcsd".enable = true;
 
-        "pcsd-ruby.service".enable = true;
+        "pcsd-ruby".enable = true;
 
         "pacemaker-setup" = {
           after = [
