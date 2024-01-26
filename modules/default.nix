@@ -279,17 +279,16 @@ in {
             cfg.pcsPackage
             shadow
           ];
-          serviceConfig.EnvironmentFile = cfg.clusterUserPasswordFile;
 
           script = ''
             # Set password on user
-            echo ${cfg.clusterUser}:{$PASSWORD} | chpasswd
+            echo ${cfg.clusterUser}:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
 
             # FIXME: it needs to be restarted the first time you do it
 
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
-                pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p {$PASSWORD}
+                pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
                 pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
                 ${concatMapStringsSep "\n" mkVirtIp (attrValues cfg.virtualIps)}
