@@ -199,6 +199,7 @@ in {
       hashedPassword = cfg.clusterUserHashedPassword;
     };
 
+    systemd.packages = [cfg.pcsPackage];
     systemd.services = let
       host = (elemAt cfg.nodes cfg.mainNodeIndex).name;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
