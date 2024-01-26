@@ -74,7 +74,7 @@ in {
     systemdResources = mkOption {
       default = {};
       type = with types;
-        attrsOf (submodule {
+        attrsOf (submodule ({name, ...}: {
           options = {
             enable = mkOption {
               default = true;
@@ -110,13 +110,13 @@ in {
               '';
             };
           };
-        });
+        }));
     };
 
     virtualIps = mkOption {
       default = {};
       type = with types;
-        attrsOf (submodule {
+        attrsOf (submodule ({name, ...}: {
           options = {
             id = mkOption {
               type = types.str;
@@ -161,7 +161,7 @@ in {
               '';
             };
           };
-        });
+        }));
     };
   };
 
