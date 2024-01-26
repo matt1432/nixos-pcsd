@@ -83,7 +83,7 @@ in {
 
     # TODO: add password file option
     clusterUserPasswordFile = mkOption {
-      type = types.str;
+      type = types.path;
       description = mdDoc ''
         Required path to a file containing a variable like so:
         PASSWORD=YOURVERYSECUREPASSWORD
