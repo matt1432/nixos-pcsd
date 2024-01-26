@@ -3,8 +3,10 @@
   automake,
   autoreconfHook,
   bundlerEnv,
+  coreutils,
   corosync,
   fetchFromGitHub,
+  hostname,
   libffi,
   libpam-wrapper,
   nss,
@@ -52,9 +54,19 @@ in
     doCheck = false;
 
     postUnpack = ''
+      # Fix hardcoded paths
       substituteInPlace $sourceRoot/pcs/lib/auth/pam.py --replace \
         'find_library("pam")' \
         '"${lib.getLib pam}/lib/libpam.so"'
+
+      substituteInPlace $sourceRoot/pcsd/bootstrap.rb --replace \
+        "/bin/hostname" "${lib.getBin hostname}/bin/hostname"
+
+      substituteInPlace $sourceRoot/pcsd/pcs.rb --replace \
+        "/bin/cat" "${lib.getBin coreutils}/bin/cat"
+
+      substituteInPlace $sourceRoot/pcs/lib/resource_agent/xml.py \
+        --replace '"/usr/bin",' '"/usr/bin", "${lib.getBin pacemaker}",'
     '';
 
     propagatedBuildInputs =
