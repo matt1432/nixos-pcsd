@@ -119,5 +119,14 @@ in
       install -Dm644 "pcs/snmp/pcs_snmp_agent.service" "$out/lib/systemd/system/pcs_snmp_agent.service"
       install -Dm644 "pcsd/pcsd-ruby.service" "$out/lib/systemd/system/pcsd-ruby.service"
       install -Dm644 "pcsd/pcsd.service" "$out/lib/systemd/system/pcsd.service"
+
+      substituteInPlace "$out/lib/systemd/system/pcs_snmp_agent.service" \
+        --replace "\''${prefix}" "$out"
+
+      substituteInPlace "$out/lib/systemd/system/pcsd-ruby.service" \
+        --replace "\''${prefix}" "$out"
+
+      substituteInPlace "$out/lib/systemd/system/pcsd.service" \
+        --replace "\''${prefix}" "$out"
     '';
   }
