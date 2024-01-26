@@ -21,7 +21,7 @@ nixpkgs-pacemaker: self: {
     optionalString
     types
     ;
-  inherit (builtins) listToAttrs typeOf;
+  inherit (builtins) listToAttrs;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pacemaker;
@@ -242,17 +242,17 @@ in {
 
           optionalString
           (length res.startAfter != 0)
-          concatMapStringsSep
-          " "
-          (v: "--after ${v}")
-          res.startAfter
+          (concatMapStringsSep
+            " "
+            (v: "--after ${v}")
+            res.startAfter)
 
           optionalString
           (length res.startBefore != 0)
-          concatMapStringsSep
-          " "
-          (v: "--before ${v}")
-          res.startBefore
+          (concatMapStringsSep
+            " "
+            (v: "--before ${v}")
+            res.startBefore)
         ])
         ++ res.extraArgs;
     in
