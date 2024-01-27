@@ -223,16 +223,18 @@ in {
         if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${vip.id}\";
         then
             # Already exists
-            ${mkVirtIp vip "update"}
+            # FIXME: find better way
+            pcs resource delete ${vip.id}
+            ${mkVirtIp vip}
         else
             # Doesn't exist
-            ${mkVirtIp vip "create"}
+            ${mkVirtIp vip}
         fi
       '';
 
-      mkVirtIp = vip: cmd:
+      mkVirtIp = vip:
         concatStringsSep " " ([
-            "pcs resource ${cmd} ${vip.id}"
+            "pcs resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
             "cidr_netmask=${toString vip.cidr}"
@@ -264,16 +266,18 @@ in {
         if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${res.systemdName}\";
         then
             # Already exists
-            ${mkSystemdResource res "update"}
+            # FIXME: find better way
+            pcs resource delete ${res.systemdName}
+            ${mkSystemdResource res}
         else
             # Doesn't exist
-            ${mkSystemdResource res "create"}
+            ${mkSystemdResource res}
         fi
       '';
 
-      mkSystemdResource = res: cmd:
+      mkSystemdResource = res:
         concatStringsSep " " ([
-            "pcs resource ${cmd} ${res.systemdName}"
+            "pcs resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
           ]
           ++ (optionals (!(isNull res.group)) [
