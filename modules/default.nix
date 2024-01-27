@@ -21,7 +21,7 @@ nixpkgs-pacemaker: self: {
     optionalString
     types
     ;
-  inherit (builtins) listToAttrs;
+  inherit (builtins) listToAttrs toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pacemaker;
@@ -317,7 +317,7 @@ in {
           ];
 
           restartIfChanged = true;
-          restartTriggers = [cfg];
+          restartTriggers = [(toJSON cfg)];
 
           serviceConfig = {
             Restart = "on-failure";
