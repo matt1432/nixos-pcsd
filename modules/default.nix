@@ -250,7 +250,8 @@ in {
       mkSystemdResource = res:
         concatStringsSep " " ([
             "pcs resource create ${res.systemdName}"
-            "systemd id=${res.systemdName}"
+            "systemd:${res.systemdName}"
+            "id=${res.systemdName}"
           ]
           ++ (optionals (!(isNull res.group)) [
             "--group ${res.group}"
