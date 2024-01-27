@@ -81,7 +81,6 @@ in {
       default = "hacluster";
     };
 
-    # TODO: add password file option
     clusterUserPasswordFile = mkOption {
       type = types.path;
       description = mdDoc ''
@@ -298,6 +297,7 @@ in {
           ++ res.extraArgs);
     in
       {
+        # The upstream service already defines this, but doesn't get applied.
         "pcsd".wantedBy = ["multi-user.target"];
         "pcsd-ruby" = {
           preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
@@ -336,7 +336,7 @@ in {
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
 
                 # FIXME: make this not make errors when already configured
-                #pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                # pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
                 # 2 node setup TODO: make this an option or auto when 2 nodes
                 pcs property set stonith-enabled=false
