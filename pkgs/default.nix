@@ -76,6 +76,9 @@ in
         --replace 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
         AC_SUBST([SYSTEMD_UNIT_DIR])"
 
+      substituteInPlace $sourceRoot/configure.ac \
+        --replace "\$prefix/libexec/pacemaker" "${pacemaker}/libexec/pacemaker"
+
       # Don't create var files
       substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
         '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd' ""
