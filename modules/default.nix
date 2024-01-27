@@ -245,13 +245,13 @@ in {
                 vip.startBefore))
           ])
           ++ vip.extraArgs
+          # FIXME: figure out why this is needed
           ++ ["--force"]);
 
       mkSystemdResource = res:
         concatStringsSep " " ([
             "pcs resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
-            "id=${res.systemdName}"
           ]
           ++ (optionals (!(isNull res.group)) [
             "--group ${res.group}"
@@ -270,8 +270,7 @@ in {
                 (v: "--before ${v}")
                 res.startBefore))
           ])
-          ++ res.extraArgs
-          ++ ["--force"]);
+          ++ res.extraArgs);
     in
       {
         "pcsd".enable = true;
@@ -300,7 +299,12 @@ in {
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
-                pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                # FIXME: make this not make errors when already configured
+                #pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+
+                # 2 node setup TODO: make this an option or auto when 2 nodes
+                pcs property set stonith-enabled=false
+                pcs property set no-quorum-policy=ignore
 
                 ${concatMapStringsSep "\n" mkVirtIp (attrValues cfg.virtualIps)}
                 ${concatMapStringsSep "\n" mkSystemdResource (attrValues resEnabled)}
