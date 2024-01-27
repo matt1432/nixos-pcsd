@@ -300,11 +300,11 @@ in {
       {
         "pcsd" = {
           enable = true;
-          wantedBy = ["multi-user.target"];
+          partOf = ["pacemaker.service"];
         };
         "pcsd-ruby" = {
           enable = true;
-          wantedBy = ["multi-user.target"];
+          partOf = ["pacemaker.service"];
           preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
         };
 
@@ -315,6 +315,9 @@ in {
             "pcsd.service"
             "pcsd-ruby.service"
           ];
+
+          restartIfChanged = true;
+          restartTriggers = [cfg];
 
           serviceConfig = {
             Restart = "on-failure";
