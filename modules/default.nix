@@ -223,7 +223,7 @@ in {
         concatStringsSep " " ([
             "pcs resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
-            "ip=${vip.id}"
+            "ip=${vip.ip}"
             "cidr_netmask=${toString vip.cidr}"
             "nic=${vip.interface}"
           ]
