@@ -219,9 +219,20 @@ in {
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
       resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
-      mkVirtIp = vip:
+      mkCondVirtIp = vip: ''
+        if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${vip.id}\";
+        then
+            # Already exists
+            ${mkVirtIp vip "update"}
+        else
+            # Doesn't exist
+            ${mkVirtIp vip "create"}
+        fi
+      '';
+
+      mkVirtIp = vip: cmd:
         concatStringsSep " " ([
-            "pcs resource create ${vip.id}"
+            "pcs resource ${cmd} ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
             "cidr_netmask=${toString vip.cidr}"
@@ -248,9 +259,21 @@ in {
           # FIXME: figure out why this is needed
           ++ ["--force"]);
 
-      mkSystemdResource = res:
+
+      mkCondSystemdRes = res: ''
+        if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${res.systemdName}\";
+        then
+            # Already exists
+            ${mkSystemdResource res "update"}
+        else
+            # Doesn't exist
+            ${mkSystemdResource res "create"}
+        fi
+      '';
+
+      mkSystemdResource = res: cmd:
         concatStringsSep " " ([
-            "pcs resource create ${res.systemdName}"
+            "pcs resource ${cmd} ${res.systemdName}"
             "systemd:${res.systemdName}"
           ]
           ++ (optionals (!(isNull res.group)) [
@@ -288,6 +311,7 @@ in {
             pacemaker
             cfg.pcsPackage
             shadow
+            jq
           ];
 
           script = ''
@@ -299,6 +323,7 @@ in {
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = ${host} ]; then
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
+
                 # FIXME: make this not make errors when already configured
                 #pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
@@ -306,8 +331,8 @@ in {
                 pcs property set stonith-enabled=false
                 pcs property set no-quorum-policy=ignore
 
-                ${concatMapStringsSep "\n" mkVirtIp (attrValues cfg.virtualIps)}
-                ${concatMapStringsSep "\n" mkSystemdResource (attrValues resEnabled)}
+                ${concatMapStringsSep "\n" mkCondVirtIp (attrValues cfg.virtualIps)}
+                ${concatMapStringsSep "\n" mkCondSystemdRes (attrValues resEnabled)}
             fi
           '';
         };
