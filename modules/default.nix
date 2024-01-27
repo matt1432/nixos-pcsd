@@ -221,53 +221,56 @@ in {
 
       mkVirtIp = vip:
         concatStringsSep " " ([
-          "pcs resource create ${vip.id}"
-          "ocf:heartbeat:IPaddr2"
-          "ip=${vip.id}"
-          "cidr_netmask=${toString vip.cidr}"
-          "nic=${vip.interface}"
-          "op monitor interval=30s"
-        ] ++ (optionals (!(isNull vip.group)) [
-          "--group ${vip.group}"
+            "pcs resource create ${vip.id}"
+            "ocf:heartbeat:IPaddr2"
+            "ip=${vip.id}"
+            "cidr_netmask=${toString vip.cidr}"
+            "nic=${vip.interface}"
+          ]
+          ++ (optionals (!(isNull vip.group)) [
+            "--group ${vip.group}"
 
-          (optionalString
-            (length vip.startAfter != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--after ${v}")
-              vip.startAfter))
+            (optionalString
+              (length vip.startAfter != 0)
+              (concatMapStringsSep
+                " "
+                (v: "--after ${v}")
+                vip.startAfter))
 
-          (optionalString
-            (length vip.startBefore != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--before ${v}")
-              vip.startBefore))
-        ]) ++ vip.extraArgs);
+            (optionalString
+              (length vip.startBefore != 0)
+              (concatMapStringsSep
+                " "
+                (v: "--before ${v}")
+                vip.startBefore))
+          ])
+          ++ vip.extraArgs
+          ++ ["--force"]);
 
       mkSystemdResource = res:
         concatStringsSep " " ([
-          "pcs resource create ${res.systemdName}"
-          "systemd id=${res.systemdName}"
-        ]
-        ++ (optionals (!(isNull res.group)) [
-          "--group ${res.group}"
+            "pcs resource create ${res.systemdName}"
+            "systemd id=${res.systemdName}"
+          ]
+          ++ (optionals (!(isNull res.group)) [
+            "--group ${res.group}"
 
-          (optionalString
-            (length res.startAfter != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--after ${v}")
-              res.startAfter))
+            (optionalString
+              (length res.startAfter != 0)
+              (concatMapStringsSep
+                " "
+                (v: "--after ${v}")
+                res.startAfter))
 
-          (optionalString
-            (length res.startBefore != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--before ${v}")
-              res.startBefore))
-        ])
-        ++ res.extraArgs);
+            (optionalString
+              (length res.startBefore != 0)
+              (concatMapStringsSep
+                " "
+                (v: "--before ${v}")
+                res.startBefore))
+          ])
+          ++ res.extraArgs
+          ++ ["--force"]);
     in
       {
         "pcsd".enable = true;
