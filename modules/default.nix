@@ -85,8 +85,7 @@ in {
     clusterUserPasswordFile = mkOption {
       type = types.path;
       description = mdDoc ''
-        Required path to a file containing a variable like so:
-        PASSWORD=YOURVERYSECUREPASSWORD
+        Required path to a file containing the password in clear text
       '';
     };
 
@@ -176,7 +175,7 @@ in {
               type = with types; listOf str;
               default = [];
               description = mdDoc ''
-                Additional command line options to pcs when making a VIP
+                Additional command line options to pcs when making a virtual IP
               '';
             };
           };
@@ -261,7 +260,6 @@ in {
           # FIXME: figure out why this is needed
           ++ ["--force"]);
 
-
       mkCondSystemdRes = res: ''
         if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${res.systemdName}\";
         then
@@ -300,8 +298,15 @@ in {
           ++ res.extraArgs);
     in
       {
-        "pcsd".enable = true;
-        "pcsd-ruby".preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
+        "pcsd" = {
+          enable = true;
+          wantedBy = ["multi-user.target"];
+        };
+        "pcsd-ruby" = {
+          enable = true;
+          wantedBy = ["multi-user.target"];
+          preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
+        };
 
         "pacemaker-setup" = {
           after = [
@@ -310,6 +315,11 @@ in {
             "pcsd.service"
             "pcsd-ruby.service"
           ];
+
+          serviceConfig = {
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
 
           path = with pkgs; [
             pacemaker
