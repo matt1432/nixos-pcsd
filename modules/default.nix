@@ -298,13 +298,8 @@ in {
           ++ res.extraArgs);
     in
       {
-        "pcsd" = {
-          enable = true;
-          partOf = ["pacemaker.service"];
-        };
+        "pcsd".wantedBy = ["multi-user.target"];
         "pcsd-ruby" = {
-          enable = true;
-          partOf = ["pacemaker.service"];
           preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
         };
 
@@ -313,7 +308,6 @@ in {
             "corosync.service"
             "pacemaker.service"
             "pcsd.service"
-            "pcsd-ruby.service"
           ];
 
           restartIfChanged = true;
