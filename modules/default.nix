@@ -49,6 +49,8 @@ in {
       '';
     };
 
+    # TODO: check this against cmd:
+    # pcs cluster config --output-format json | jq '.["nodes"]'
     nodes = mkOption {
       type = with types;
         listOf (submodule {
@@ -217,9 +219,11 @@ in {
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
       resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
+      # TODO: Always reset if extraArgs is set
+      # TODO: check changes in groups with this cmd:
+      # pcs resource config --output-format json | jq '.["groups"][]'
       mkCondVirtIp = vip: ''
-        if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${vip.id}\";
-        then
+        if pcs resource config ${vip.id}; then
             # Already exists
             # FIXME: find better way
             pcs resource delete ${vip.id}
@@ -259,9 +263,12 @@ in {
           # FIXME: figure out why this is needed
           ++ ["--force"]);
 
+      mkVirtIps = vips:
+        concatMapStringsSep "\n" mkCondVirtIp vips;
+
+
       mkCondSystemdRes = res: ''
-        if pcs resource config --output-format json | jq '.["primitives"][].id' | grep \"${res.systemdName}\";
-        then
+        if pcs resource config ${res.systemdName}; then
             # Already exists
             # FIXME: find better way
             pcs resource delete ${res.systemdName}
@@ -295,6 +302,26 @@ in {
                 res.startBefore))
           ])
           ++ res.extraArgs);
+
+      mkSystemdResources = ress:
+        concatMapStringsSep "\n" mkCondSystemdRes ress;
+
+
+      inOrder = func: attrs:
+        concatStringsSep "\n" [
+          (func (attrValues (filterAttrs
+            (n: v: v.startAfter == [] && v.startBefore == [])
+            attrs)))
+          (func (attrValues (filterAttrs
+            (n: v: v.startAfter != [] && v.startBefore == [])
+            attrs)))
+          (func (attrValues (filterAttrs
+            (n: v: v.startAfter == [] && v.startBefore != [])
+            attrs)))
+          (func (attrValues (filterAttrs
+            (n: v: v.startAfter != [] && v.startBefore != [])
+            attrs)))
+        ];
     in
       {
         # The upstream service already defines this, but doesn't get applied.
@@ -338,12 +365,14 @@ in {
                 # FIXME: make this not make errors when already configured
                 # pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
-                # 2 node setup TODO: make this an option or auto when 2 nodes
-                pcs property set stonith-enabled=false
-                pcs property set no-quorum-policy=ignore
+            ${optionalString (length cfg.nodes < 3) ''
+              pcs property set stonith-enabled=false
+              pcs property set no-quorum-policy=ignore
+            ''}
 
-                ${concatMapStringsSep "\n" mkCondVirtIp (attrValues cfg.virtualIps)}
-                ${concatMapStringsSep "\n" mkCondSystemdRes (attrValues resEnabled)}
+            ${inOrder mkVirtIps cfg.virtualIps}
+            ${inOrder mkSystemdResources resEnabled}
+
             fi
           '';
         };
