@@ -20,9 +20,10 @@ nixpkgs-pacemaker: self: {
     mkOption
     optionals
     optionalString
+    toInt
     types
     ;
-  inherit (builtins) listToAttrs toJSON;
+  inherit (builtins) hasAttr listToAttrs toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pacemaker;
@@ -50,8 +51,6 @@ in {
       '';
     };
 
-    # TODO: check this against cmd:
-    # pcs cluster config --output-format json | jq '.["nodes"]'
     nodes = mkOption {
       type = with types;
         listOf (submodule {
@@ -61,7 +60,7 @@ in {
               description = lib.mdDoc "Node name";
             };
             nodeid = mkOption {
-              type = int;
+              type = str;
               description = lib.mdDoc "Node ID number";
             };
             addrs = mkOption {
@@ -207,7 +206,8 @@ in {
       enable = true;
       clusterName = mkForce cfg.clusterName;
       nodelist = mkForce (forEach cfg.nodes (node: {
-        inherit (node) nodeid name;
+        inherit (node) name;
+        nodeid = toInt node.nodeid;
         ring_addrs = forEach node.addrs (a: a.addr);
       }));
     };
@@ -242,15 +242,26 @@ in {
       # TODO: Always reset if extraArgs is set
       # TODO: check changes in groups with this cmd:
       # pcs resource config --output-format json | jq '.["groups"][]'
-      mkCondVirtIp = vip: ''
-        if pcs resource config ${vip.id}; then
+      mkConditional = attrs: let
+        result =
+          if (hasAttr "id" attrs)
+          then {
+            name = attrs.id;
+            func = mkVirtIp;
+          }
+          else {
+            name = attrs.systemdName;
+            func = mkSystemdResource;
+          };
+      in ''
+        if pcs resource config ${result.name}; then
             # Already exists
             # FIXME: find better way
-            pcs resource delete ${vip.id}
-            ${mkVirtIp vip}
+            pcs resource delete ${result.name}
+            ${result.func attrs}
         else
             # Doesn't exist
-            ${mkVirtIp vip}
+            ${result.func attrs}
         fi
       '';
 
@@ -284,20 +295,7 @@ in {
           ++ ["--force"]);
 
       mkVirtIps = vips:
-        concatMapStringsSep "\n" mkCondVirtIp vips;
-
-
-      mkCondSystemdRes = res: ''
-        if pcs resource config ${res.systemdName}; then
-            # Already exists
-            # FIXME: find better way
-            pcs resource delete ${res.systemdName}
-            ${mkSystemdResource res}
-        else
-            # Doesn't exist
-            ${mkSystemdResource res}
-        fi
-      '';
+        concatMapStringsSep "\n" mkConditional vips;
 
       mkSystemdResource = res:
         concatStringsSep " " ([
@@ -324,8 +322,7 @@ in {
           ++ res.extraArgs);
 
       mkSystemdResources = ress:
-        concatMapStringsSep "\n" mkCondSystemdRes ress;
-
+        concatMapStringsSep "\n" mkConditional ress;
 
       inOrder = func: attrs:
         concatStringsSep "\n" [
@@ -370,21 +367,38 @@ in {
             cfg.pcsPackage
             shadow
             jq
+            diffutils
           ];
 
           script = ''
-            # Set password on user
+            # Set password on user on every node
             echo ${cfg.clusterUser}:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
 
-            # FIXME: it needs to be restarted the first time you do it
-
             # The config needs to be installed from one node only
-            if [ "$(uname -n)" = ${host} ]; then
+            if [ "$(uname -n)" = "${host}" ]; then
+                # We want to reset the cluster completely if
+                # there is any changes in the corosync config
+                # to make sure it is setup correctly
+                CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '.["nodes"]')
+                CONFIG_NODES=$(echo '${toJSON cfg.nodes}' | jq --sort-keys)
+
+                # Same thing if the name changes
+                CURRENT_NAME=$(pcs cluster config --output-format json | jq '.["cluster_name"]')
+                CONFIG_NAME="\"${cfg.clusterName}\""
+
+                if ! cmp -s <(echo "$CURRENT_NODES") <(echo "$CONFIG_NODES") ||
+                   ! cmp -s <(echo "$CURRENT_NAME") <(echo "$CONFIG_NAME"); then
+                    echo "Resetting cluster"
+                    pcs stop
+                    pcs destroy
+                    pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                fi
+
+                # Auth every node
                 pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
 
-                # FIXME: make this not make errors when already configured
-                # pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
-
+                # Disable stonith and quorum if the cluster
+                # only has 2 or less nodes
             ${optionalString (length cfg.nodes < 3) ''
               pcs property set stonith-enabled=false
               pcs property set no-quorum-policy=ignore
