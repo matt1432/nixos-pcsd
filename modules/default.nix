@@ -12,6 +12,7 @@ nixpkgs-pacemaker: self: {
     concatStringsSep
     elemAt
     filterAttrs
+    forEach
     length
     mdDoc
     mkForce
@@ -55,17 +56,33 @@ in {
       type = with types;
         listOf (submodule {
           options = {
-            nodeid = mkOption {
-              type = int;
-              description = lib.mdDoc "Node ID number";
-            };
             name = mkOption {
               type = str;
               description = lib.mdDoc "Node name";
             };
-            ring_addrs = mkOption {
-              type = listOf str;
+            nodeid = mkOption {
+              type = int;
+              description = lib.mdDoc "Node ID number";
+            };
+            addrs = mkOption {
               description = lib.mdDoc "List of addresses, one for each ring.";
+              type = listOf (submodule {
+                options = {
+                  addr = mkOption {
+                    type = str;
+                  };
+                  # FIXME: what is this?
+                  link = mkOption {
+                    type = str;
+                    default = "0";
+                  };
+                  # FIXME: this should be an enum
+                  type = mkOption {
+                    type = str;
+                    default = "IPv4";
+                  };
+                };
+              });
             };
           };
         });
@@ -189,7 +206,10 @@ in {
     services.corosync = {
       enable = true;
       clusterName = mkForce cfg.clusterName;
-      nodelist = mkForce cfg.nodes;
+      nodelist = mkForce (forEach cfg.nodes (node: {
+        inherit (node) nodeid name;
+        ring_addrs = forEach node.addrs (a: a.addr);
+      }));
     };
 
     environment.etc."corosync/authkey" = {
