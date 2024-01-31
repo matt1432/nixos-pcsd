@@ -5,6 +5,9 @@
       owner = "NixOS";
       repo = "nixpkgs";
       ref = "nixos-unstable";
+
+      # FIXME: build fails on latest unstable
+      rev = "612f97239e2cc474c13c9dafa0df378058c5ad8d";
     };
 
     nixpkgs-pacemaker = {
@@ -44,26 +47,15 @@
     formatter = perSystem (_: pkgs: pkgs.alejandra);
 
     devShells = perSystem (_: pkgs: {
-      default = let
-        inherit
-          (import ./pkgs/default.nix pkgs)
-          buildInputs
-          nativeBuildInputs
-          propagatedBuildInputs
-          ;
-      in
-        pkgs.mkShell {
-          packages = with pkgs;
-            [
-              alejandra
-              git
-              nix
-              bundix
-            ]
-            ++ buildInputs
-            ++ nativeBuildInputs
-            ++ propagatedBuildInputs;
-        };
+      default = pkgs.mkShell {
+        packages = with pkgs; [
+          alejandra
+          git
+          nix
+          bundler
+          bundix
+        ];
+      };
     });
   };
 }
