@@ -19,7 +19,6 @@ nixpkgs-pacemaker: self: {
     mkForce
     mkIf
     mkOption
-    optionals
     optionalString
     toInt
     types
@@ -129,6 +128,12 @@ in {
               type = with types; listOf str;
             };
 
+            startBefore = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; listOf str;
+            };
+
             extraArgs = mkOption {
               type = with types; listOf str;
               default = [];
@@ -169,6 +174,12 @@ in {
             };
 
             startAfter = mkOption {
+              default = [];
+              # TODO: assert possible strings
+              type = with types; listOf str;
+            };
+
+            startBefore = mkOption {
               default = [];
               # TODO: assert possible strings
               type = with types; listOf str;
@@ -220,7 +231,7 @@ in {
     ];
 
     # This user is created in the pacemaker service
-    # PCSD needs it to have the "haclient" group and a password
+    # pcsd needs it to have the "haclient" group and a password
     users.users.hacluster = {
       isSystemUser = true;
       extraGroups = ["haclient"];
@@ -234,8 +245,27 @@ in {
         concatMapStringsSep "\n" func (attrValues attrs);
 
       # Resource functions
-      mkVirtIp = vip: {
-        createCmd = concatStringsSep " " ([
+      mkGroupCmd = resource: name:
+        concatStringsSep " " [
+          "pcs resource group add ${resource.group} ${name}"
+
+          (optionalString
+            (length resource.startAfter != 0)
+            (concatMapStringsSep
+              " "
+              (r: "--after ${r}")
+              resource.startAfter))
+
+          (optionalString
+            (length resource.startBefore != 0)
+            (concatMapStringsSep
+              " "
+              (r: "--before ${r}")
+              resource.startBefore))
+        ];
+
+      mkVirtIp = vip:
+        concatStringsSep " " ([
             "pcs resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
@@ -248,21 +278,8 @@ in {
           # FIXME: figure out why this is needed
           ++ ["--force"]);
 
-        # Manage group
-        groupCmd = concatStringsSep " " (optionals (!(isNull vip.group)) [
-          "pcs resource group add ${vip.group} ${vip.id}"
-
-          (optionalString
-            (length vip.startAfter != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--after ${v}")
-              vip.startAfter))
-        ]);
-      };
-
-      mkSystemdResource = res: {
-        createCmd = concatStringsSep " " ([
+      mkSystemdResource = res:
+        concatStringsSep " " ([
             "pcs resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
             # Run after group is handled
@@ -270,27 +287,18 @@ in {
           ]
           ++ res.extraArgs);
 
-        # Manage group
-        groupCmd = concatStringsSep " " (optionals (!(isNull res.group)) [
-          "pcs resource group add ${res.group} ${res.systemdName}"
-
-          (optionalString
-            (length res.startAfter != 0)
-            (concatMapStringsSep
-              " "
-              (v: "--after ${v}")
-              res.startAfter))
-        ]);
-      };
-
-      resourceTypeInfo = attrs:
-        if (hasAttr "id" attrs)
-        then
-          {name = attrs.id;}
-          // mkVirtIp attrs
-        else
-          {name = attrs.systemdName;}
-          // mkSystemdResource attrs;
+      resourceTypeInfo = resource:
+        if (hasAttr "id" resource)
+        then {
+          name = resource.id;
+          createCmd = mkVirtIp resource;
+          groupCmd = mkGroupCmd resource resource.id;
+        }
+        else {
+          name = resource.systemdName;
+          createCmd = mkSystemdResource resource;
+          groupCmd = mkGroupCmd resource resource.systemdName;
+        };
 
       # TODO: Always reset if extraArgs is set
       createOrUpdateResource = resource: let
@@ -307,28 +315,33 @@ in {
         fi
       '';
 
-      handleGroup = resource: let
+      addToGroup = resource: let
         resInfo = resourceTypeInfo resource;
-      in "${resInfo.groupCmd}";
+      in
+        optionalString
+        (!(isNull resource.group))
+        "pcs resource group add ${resource.group} ${resInfo.name}";
+
+      handlePosInGroup = resource: let
+        resInfo = resourceTypeInfo resource;
+      in
+        optionalString
+        (
+          !(isNull resource.group)
+          && (
+            resource.startAfter != [] || resource.startBefore != []
+          )
+        )
+        "${resInfo.groupCmd}";
 
       enableResource = resource: let
         resInfo = resourceTypeInfo resource;
       in "pcs resource enable ${resInfo.name}";
 
-      inOrder = func: resources:
-        concatStringsSep "\n" [
-          (concatMapAttrsToString func (filterAttrs
-            (n: v: v.startAfter == [])
-            resources))
-          (concatMapAttrsToString func (filterAttrs
-            (n: v: v.startAfter != [])
-            resources))
-        ];
-
       # Important vars
       mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
-      resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
+      resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
     in
       {
         "pacemaker-setup" = {
@@ -381,9 +394,10 @@ in {
                 done
 
                 # Setup resources
-            ${inOrder createOrUpdateResource (cfg.virtualIps // resEnabled)}
-            ${inOrder handleGroup (cfg.virtualIps // resEnabled)}
-            ${inOrder enableResource (cfg.virtualIps // resEnabled)}
+            ${concatMapAttrsToString createOrUpdateResource resEnabled}
+            ${concatMapAttrsToString addToGroup resEnabled}
+            ${concatMapAttrsToString handlePosInGroup resEnabled}
+            ${concatMapAttrsToString enableResource resEnabled}
 
             fi
           '';
