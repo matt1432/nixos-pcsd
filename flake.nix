@@ -40,8 +40,8 @@
     });
 
     nixosModules = {
-      pacemaker = import ./modules nixpkgs-pacemaker self;
-      default = self.nixosModules.pacemaker;
+      pcsd = import ./modules nixpkgs-pacemaker self;
+      default = self.nixosModules.pcsd;
     };
 
     formatter = perSystem (_: pkgs: pkgs.alejandra);

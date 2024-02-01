@@ -15,6 +15,7 @@ nixpkgs-pacemaker: self: {
     forEach
     length
     mdDoc
+    mkEnableOption
     mkForce
     mkIf
     mkOption
@@ -26,12 +27,14 @@ nixpkgs-pacemaker: self: {
   inherit (builtins) hasAttr listToAttrs toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
-  cfg = config.services.pacemaker;
+  cfg = config.services.pcsd;
 in {
   disabledModules = [pacemakerPath];
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
 
-  options.services.pacemaker = {
+  options.services.pcsd = {
+    enable = mkEnableOption (mdDoc "pcsd");
+
     # Corosync options
     corosyncKeyFile = mkOption {
       type = types.path;
@@ -89,14 +92,9 @@ in {
     };
 
     # PCS options
-    pcsPackage = mkOption {
+    package = mkOption {
       type = types.package;
       default = self.packages.x86_64-linux.default;
-    };
-
-    clusterUser = mkOption {
-      type = types.str;
-      default = "hacluster";
     };
 
     clusterUserPasswordFile = mkOption {
@@ -189,6 +187,9 @@ in {
   };
 
   config = mkIf cfg.enable {
+    # Pacemaker
+    services.pacemaker.enable = true;
+
     # Corosync
     services.corosync = {
       enable = true;
@@ -212,16 +213,21 @@ in {
       password   include      systemd-user
       session    include      systemd-user
     '';
-    environment.systemPackages = [cfg.pcsPackage];
+    environment.systemPackages = [
+      cfg.package
+      pkgs.ocf-resource-agents
+      pkgs.pacemaker
+    ];
 
-    # FIXME: this is definitely not how you do it
-    users.users.${cfg.clusterUser} = {
+    # This user is created in the pacemaker service
+    # PCSD needs it to have the "haclient" group and a password
+    users.users.hacluster = {
       isSystemUser = true;
       extraGroups = ["haclient"];
     };
     users.groups.haclient = {};
 
-    systemd.packages = [cfg.pcsPackage];
+    systemd.packages = [cfg.package];
     systemd.services = let
       host = (elemAt cfg.nodes cfg.mainNodeIndex).name;
       nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
@@ -252,6 +258,7 @@ in {
             ${cmd.create}
         fi
 
+        # TODO: Move this to end of script
         ${cmd.group}
         pcs resource enable ${result.name}
       '';
@@ -285,7 +292,6 @@ in {
 
       mkVirtIps = vips:
         concatMapStringsSep "\n" mkConditional vips;
-
 
       mkSystemdResource = res: {
         create = concatStringsSep " " ([
@@ -323,9 +329,13 @@ in {
         ];
     in
       {
-        # The upstream service already defines this, but doesn't get applied.
-        "pcsd".wantedBy = ["multi-user.target"];
+        "pcsd" = {
+          path = [cfg.package pkgs.ocf-resource-agents];
+          # The upstream service already defines this, but doesn't get applied.
+          wantedBy = ["multi-user.target"];
+        };
         "pcsd-ruby" = {
+          path = [cfg.package pkgs.ocf-resource-agents];
           preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
         };
 
@@ -346,7 +356,7 @@ in {
 
           path = with pkgs; [
             pacemaker
-            cfg.pcsPackage
+            cfg.package
             shadow
             jq
             diffutils
@@ -354,7 +364,7 @@ in {
 
           script = ''
             # Set password on user on every node
-            echo ${cfg.clusterUser}:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
+            echo hacluster:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
 
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = "${host}" ]; then
@@ -377,7 +387,7 @@ in {
                 fi
 
                 # Auth every node
-                pcs host auth ${nodeNames} -u ${cfg.clusterUser} -p $(cat ${cfg.clusterUserPasswordFile})
+                pcs host auth ${nodeNames} -u hacluster -p $(cat ${cfg.clusterUserPasswordFile})
 
                 # Disable stonith and quorum if the cluster
                 # only has 2 or less nodes
