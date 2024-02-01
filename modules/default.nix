@@ -131,12 +131,6 @@ in {
               type = with types; listOf str;
             };
 
-            startBefore = mkOption {
-              default = [];
-              # TODO: assert possible strings
-              type = with types; listOf str;
-            };
-
             extraArgs = mkOption {
               type = with types; listOf str;
               default = [];
@@ -177,12 +171,6 @@ in {
             };
 
             startAfter = mkOption {
-              default = [];
-              # TODO: assert possible strings
-              type = with types; listOf str;
-            };
-
-            startBefore = mkOption {
               default = [];
               # TODO: assert possible strings
               type = with types; listOf str;
@@ -240,8 +228,6 @@ in {
       resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
 
       # TODO: Always reset if extraArgs is set
-      # TODO: check changes in groups with this cmd:
-      # pcs resource config --output-format json | jq '.["groups"][]'
       mkConditional = attrs: let
         result =
           if (hasAttr "id" attrs)
@@ -253,73 +239,75 @@ in {
             name = attrs.systemdName;
             func = mkSystemdResource;
           };
+
+        cmd = result.func attrs;
       in ''
         if pcs resource config ${result.name}; then
             # Already exists
             # FIXME: find better way
             pcs resource delete ${result.name}
-            ${result.func attrs}
+            ${cmd.create}
         else
             # Doesn't exist
-            ${result.func attrs}
+            ${cmd.create}
         fi
+
+        ${cmd.group}
+        pcs resource enable ${result.name}
       '';
 
-      mkVirtIp = vip:
-        concatStringsSep " " ([
+      mkVirtIp = vip: {
+        create = concatStringsSep " " ([
             "pcs resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
             "cidr_netmask=${toString vip.cidr}"
             "nic=${vip.interface}"
+            # Run after group is handled
+            "--disabled"
           ]
-          ++ (optionals (!(isNull vip.group)) [
-            "--group ${vip.group}"
-
-            (optionalString
-              (length vip.startAfter != 0)
-              (concatMapStringsSep
-                " "
-                (v: "--after ${v}")
-                vip.startAfter))
-
-            (optionalString
-              (length vip.startBefore != 0)
-              (concatMapStringsSep
-                " "
-                (v: "--before ${v}")
-                vip.startBefore))
-          ])
           ++ vip.extraArgs
           # FIXME: figure out why this is needed
           ++ ["--force"]);
 
+        # Manage group
+        group = concatStringsSep " " (optionals (!(isNull vip.group)) [
+          "pcs resource group add ${vip.group} ${vip.id}"
+
+          (optionalString
+            (length vip.startAfter != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--after ${v}")
+              vip.startAfter))
+        ]);
+      };
+
       mkVirtIps = vips:
         concatMapStringsSep "\n" mkConditional vips;
 
-      mkSystemdResource = res:
-        concatStringsSep " " ([
+
+      mkSystemdResource = res: {
+        create = concatStringsSep " " ([
             "pcs resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
+            # Run after group is handled
+            "--disabled"
           ]
-          ++ (optionals (!(isNull res.group)) [
-            "--group ${res.group}"
-
-            (optionalString
-              (length res.startAfter != 0)
-              (concatMapStringsSep
-                " "
-                (v: "--after ${v}")
-                res.startAfter))
-
-            (optionalString
-              (length res.startBefore != 0)
-              (concatMapStringsSep
-                " "
-                (v: "--before ${v}")
-                res.startBefore))
-          ])
           ++ res.extraArgs);
+
+        # Manage group
+        group = concatStringsSep " " (optionals (!(isNull res.group)) [
+          "pcs resource group add ${res.group} ${res.systemdName}"
+
+          (optionalString
+            (length res.startAfter != 0)
+            (concatMapStringsSep
+              " "
+              (v: "--after ${v}")
+              res.startAfter))
+        ]);
+      };
 
       mkSystemdResources = ress:
         concatMapStringsSep "\n" mkConditional ress;
@@ -327,16 +315,10 @@ in {
       inOrder = func: attrs:
         concatStringsSep "\n" [
           (func (attrValues (filterAttrs
-            (n: v: v.startAfter == [] && v.startBefore == [])
+            (n: v: v.startAfter == [])
             attrs)))
           (func (attrValues (filterAttrs
-            (n: v: v.startAfter != [] && v.startBefore == [])
-            attrs)))
-          (func (attrValues (filterAttrs
-            (n: v: v.startAfter == [] && v.startBefore != [])
-            attrs)))
-          (func (attrValues (filterAttrs
-            (n: v: v.startAfter != [] && v.startBefore != [])
+            (n: v: v.startAfter != [])
             attrs)))
         ];
     in
@@ -404,6 +386,13 @@ in {
               pcs property set no-quorum-policy=ignore
             ''}
 
+                # Delete all groups
+                pcs resource config --output-format json | jq '.["groups"][].id' -r |
+                while read id ; do
+                    pcs resource group delete $id
+                done
+
+                # Setup resources
             ${inOrder mkVirtIps cfg.virtualIps}
             ${inOrder mkSystemdResources resEnabled}
 
