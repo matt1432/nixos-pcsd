@@ -8,11 +8,14 @@ nixpkgs-pacemaker: self: {
     (lib)
     attrNames
     attrValues
+    boolToString
     concatMapStringsSep
     concatStringsSep
     elemAt
+    fileContents
     filterAttrs
     forEach
+    hasAttr
     length
     mdDoc
     mkEnableOption
@@ -23,7 +26,7 @@ nixpkgs-pacemaker: self: {
     toInt
     types
     ;
-  inherit (builtins) hasAttr listToAttrs toJSON;
+  inherit (builtins) listToAttrs toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
@@ -300,15 +303,24 @@ in {
           groupCmd = mkGroupCmd resource resource.systemdName;
         };
 
-      # TODO: Always reset if extraArgs is set
       createOrUpdateResource = resource: let
         resInfo = resourceTypeInfo resource;
       in ''
         if pcs resource config ${resInfo.name}; then
             # Already exists
-            # FIXME: find better way
-            pcs resource delete ${resInfo.name}
-            ${resInfo.createCmd}
+
+            # Reset if has extraArgs because we can't make sure
+            # all the settings would be set
+            if ${boolToString (resource.extraArgs != [])}; then
+                pcs resource delete ${resInfo.name}
+                ${resInfo.createCmd}
+
+            elif [[ $(xmldiff "${resInfo.name}" "${resInfo.createCmd}") == "different" ]]; then
+                # TODO: use update instead?
+                pcs resource delete ${resInfo.name}
+                ${resInfo.createCmd}
+            fi
+
         else
             # Doesn't exist
             ${resInfo.createCmd}
@@ -351,6 +363,12 @@ in {
             shadow
             jq
             diffutils
+
+            (writeShellApplication {
+              name = "xmldiff";
+              runtimeInputs = [cfg.package libxml2 diffutils];
+              text = fileContents ./bin/xmldiff.sh;
+            })
           ];
 
           script = ''
@@ -395,6 +413,7 @@ in {
 
                 # Setup resources
             ${concatMapAttrsToString createOrUpdateResource resEnabled}
+            # FIXME: resources are restarted when changing group pos?
             ${concatMapAttrsToString addToGroup resEnabled}
             ${concatMapAttrsToString handlePosInGroup resEnabled}
             ${concatMapAttrsToString enableResource resEnabled}
