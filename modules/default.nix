@@ -229,42 +229,13 @@ in {
 
     systemd.packages = [cfg.package];
     systemd.services = let
-      host = (elemAt cfg.nodes cfg.mainNodeIndex).name;
-      nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
-      resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
+      # Abstract funcs
+      concatMapAttrsToString = func: attrs:
+        concatMapStringsSep "\n" func (attrValues attrs);
 
-      # TODO: Always reset if extraArgs is set
-      mkConditional = attrs: let
-        result =
-          if (hasAttr "id" attrs)
-          then {
-            name = attrs.id;
-            func = mkVirtIp;
-          }
-          else {
-            name = attrs.systemdName;
-            func = mkSystemdResource;
-          };
-
-        cmd = result.func attrs;
-      in ''
-        if pcs resource config ${result.name}; then
-            # Already exists
-            # FIXME: find better way
-            pcs resource delete ${result.name}
-            ${cmd.create}
-        else
-            # Doesn't exist
-            ${cmd.create}
-        fi
-
-        # TODO: Move this to end of script
-        ${cmd.group}
-        pcs resource enable ${result.name}
-      '';
-
+      # Resource functions
       mkVirtIp = vip: {
-        create = concatStringsSep " " ([
+        createCmd = concatStringsSep " " ([
             "pcs resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
@@ -278,7 +249,7 @@ in {
           ++ ["--force"]);
 
         # Manage group
-        group = concatStringsSep " " (optionals (!(isNull vip.group)) [
+        groupCmd = concatStringsSep " " (optionals (!(isNull vip.group)) [
           "pcs resource group add ${vip.group} ${vip.id}"
 
           (optionalString
@@ -290,11 +261,8 @@ in {
         ]);
       };
 
-      mkVirtIps = vips:
-        concatMapStringsSep "\n" mkConditional vips;
-
       mkSystemdResource = res: {
-        create = concatStringsSep " " ([
+        createCmd = concatStringsSep " " ([
             "pcs resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
             # Run after group is handled
@@ -303,7 +271,7 @@ in {
           ++ res.extraArgs);
 
         # Manage group
-        group = concatStringsSep " " (optionals (!(isNull res.group)) [
+        groupCmd = concatStringsSep " " (optionals (!(isNull res.group)) [
           "pcs resource group add ${res.group} ${res.systemdName}"
 
           (optionalString
@@ -315,45 +283,55 @@ in {
         ]);
       };
 
-      mkSystemdResources = ress:
-        concatMapStringsSep "\n" mkConditional ress;
+      resourceTypeInfo = attrs:
+        if (hasAttr "id" attrs)
+        then
+          {name = attrs.id;}
+          // mkVirtIp attrs
+        else
+          {name = attrs.systemdName;}
+          // mkSystemdResource attrs;
 
-      inOrder = func: attrs:
+      # TODO: Always reset if extraArgs is set
+      createOrUpdateResource = resource: let
+        resInfo = resourceTypeInfo resource;
+      in ''
+        if pcs resource config ${resInfo.name}; then
+            # Already exists
+            # FIXME: find better way
+            pcs resource delete ${resInfo.name}
+            ${resInfo.createCmd}
+        else
+            # Doesn't exist
+            ${resInfo.createCmd}
+        fi
+      '';
+
+      handleGroup = resource: let
+        resInfo = resourceTypeInfo resource;
+      in "${resInfo.groupCmd}";
+
+      enableResource = resource: let
+        resInfo = resourceTypeInfo resource;
+      in "pcs resource enable ${resInfo.name}";
+
+      inOrder = func: resources:
         concatStringsSep "\n" [
-          (func (attrValues (filterAttrs
+          (concatMapAttrsToString func (filterAttrs
             (n: v: v.startAfter == [])
-            attrs)))
-          (func (attrValues (filterAttrs
+            resources))
+          (concatMapAttrsToString func (filterAttrs
             (n: v: v.startAfter != [])
-            attrs)))
+            resources))
         ];
+
+      # Important vars
+      mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
+      nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
+      resEnabled = filterAttrs (n: v: v.enable) cfg.systemdResources;
     in
       {
-        "pcsd" = {
-          path = [cfg.package pkgs.ocf-resource-agents];
-          # The upstream service already defines this, but doesn't get applied.
-          wantedBy = ["multi-user.target"];
-        };
-        "pcsd-ruby" = {
-          path = [cfg.package pkgs.ocf-resource-agents];
-          preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
-        };
-
         "pacemaker-setup" = {
-          after = [
-            "corosync.service"
-            "pacemaker.service"
-            "pcsd.service"
-          ];
-
-          restartIfChanged = true;
-          restartTriggers = [(toJSON cfg)];
-
-          serviceConfig = {
-            Restart = "on-failure";
-            RestartSec = "5s";
-          };
-
           path = with pkgs; [
             pacemaker
             cfg.package
@@ -367,7 +345,7 @@ in {
             echo hacluster:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
 
             # The config needs to be installed from one node only
-            if [ "$(uname -n)" = "${host}" ]; then
+            if [ "$(uname -n)" = "${mainNode}" ]; then
                 # We want to reset the cluster completely if
                 # there is any changes in the corosync config
                 # to make sure it is setup correctly
@@ -403,11 +381,36 @@ in {
                 done
 
                 # Setup resources
-            ${inOrder mkVirtIps cfg.virtualIps}
-            ${inOrder mkSystemdResources resEnabled}
+            ${inOrder createOrUpdateResource (cfg.virtualIps // resEnabled)}
+            ${inOrder handleGroup (cfg.virtualIps // resEnabled)}
+            ${inOrder enableResource (cfg.virtualIps // resEnabled)}
 
             fi
           '';
+
+          after = [
+            "corosync.service"
+            "pacemaker.service"
+            "pcsd.service"
+          ];
+
+          restartIfChanged = true;
+          restartTriggers = [(toJSON cfg)];
+
+          serviceConfig = {
+            Restart = "on-failure";
+            RestartSec = "5s";
+          };
+        };
+
+        "pcsd" = {
+          path = [cfg.package pkgs.ocf-resource-agents];
+          # The upstream service already defines this, but doesn't get applied.
+          wantedBy = ["multi-user.target"];
+        };
+        "pcsd-ruby" = {
+          path = [cfg.package pkgs.ocf-resource-agents];
+          preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
         };
       }
       # Force all systemd units handled by pacemaker to not start automatically
