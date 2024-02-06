@@ -16,12 +16,32 @@
       repo = "nixpkgs";
       ref = "corosync-pacemaker-ocf";
     };
+
+    # srcs
+    pcs-src = {
+      type = "github";
+      owner = "ClusterLabs";
+      repo = "pcs";
+
+      # Get latest
+      # ref = "v0.11.7";
+      flake = false;
+    };
+    pyagentx-src = {
+      type = "github";
+      owner = "ondrejmular";
+      repo = "pyagentx";
+      rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
+      flake = false;
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
     nixpkgs-pacemaker,
+    pcs-src,
+    pyagentx-src,
     ...
   }: let
     # As of right now, pacemaker only works on this arch
@@ -35,7 +55,7 @@
         attrs system pkgs);
   in {
     packages = perSystem (system: pkgs: {
-      pcs = pkgs.callPackage ./pkgs pkgs;
+      pcs = pkgs.callPackage ./pkgs {inherit pkgs pcs-src pyagentx-src;};
       default = self.packages.${system}.pcs;
     });
 

@@ -33,10 +33,45 @@
         "type": "github"
       }
     },
+    "pcs-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1707226128,
+        "narHash": "sha256-ZWE2Ruk3cSY9v/4FqrorBFRUZtDodUoNWIyXPMscqQc=",
+        "owner": "ClusterLabs",
+        "repo": "pcs",
+        "rev": "f251384cd828ae701212a2bdc3d1c273034a053f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ClusterLabs",
+        "repo": "pcs",
+        "type": "github"
+      }
+    },
+    "pyagentx-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1511257724,
+        "narHash": "sha256-uXFRtQskF2HhHi3KhJwajPvt8c8unrBBOqxGimV74Rc=",
+        "owner": "ondrejmular",
+        "repo": "pyagentx",
+        "rev": "8fcc2f056b54b92c67a264671198fd197d5a1799",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ondrejmular",
+        "repo": "pyagentx",
+        "rev": "8fcc2f056b54b92c67a264671198fd197d5a1799",
+        "type": "github"
+      }
+    },
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nixpkgs-pacemaker": "nixpkgs-pacemaker"
+        "nixpkgs-pacemaker": "nixpkgs-pacemaker",
+        "pcs-src": "pcs-src",
+        "pyagentx-src": "pyagentx-src"
       }
     }
   },

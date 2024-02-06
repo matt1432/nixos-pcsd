@@ -1,10 +1,11 @@
 {
+  pcs-src,
+  pyagentx-src,
   autoconf,
   automake,
   bundlerEnv,
   coreutils,
   corosync,
-  fetchFromGitHub,
   hostname,
   libffi,
   libpam-wrapper,
@@ -19,39 +20,32 @@
   lib,
   ...
 }: let
-  pyagentx = python3Packages.buildPythonPackage rec {
+  pyagentx = python3Packages.buildPythonPackage {
     pname = "pyagentx";
-    version = "0.4.1";
-    src = fetchFromGitHub {
-      owner = "ondrejmular";
-      repo = pname;
-      rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
-      hash = "sha256-uXFRtQskF2HhHi3KhJwajPvt8c8unrBBOqxGimV74Rc=";
-    };
+    version = pyagentx-src.rev;
+    src = pyagentx-src;
   };
 
-  version = "v0.11.7";
+  version = "v0.11.7.dev";
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
     inherit ruby;
     gemdir = ./.;
   };
 in
-  python3Packages.buildPythonPackage rec {
+  python3Packages.buildPythonPackage {
     pname = "pcs";
     inherit version;
 
-    src = fetchFromGitHub {
-      owner = "ClusterLabs";
-      repo = pname;
-      rev = version;
-      hash = "sha256-5JEY/eMve8x8yUDL8jWgNYWqjxRIa9AqsTC09yt2pYA=";
-    };
+    src = pcs-src;
 
     # Curl test assumes network access
     doCheck = false;
 
     postUnpack = ''
+      # Fix version of untagged build
+      echo 'printf %s "${version}"' > $sourceRoot/make/git-version-gen
+
       # Fix hardcoded paths
       substituteInPlace $sourceRoot/pcs/lib/auth/pam.py --replace \
         'find_library("pam")' \
