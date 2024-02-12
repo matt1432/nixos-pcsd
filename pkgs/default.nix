@@ -1,25 +1,26 @@
 {
-  pcs-src,
-  pyagentx-src,
   autoconf,
   automake,
   bundlerEnv,
   coreutils,
-  corosync,
   hostname,
+  lib,
   libffi,
   libpam-wrapper,
   nss,
-  pacemaker,
+  pacemakerPkgs,
   pam,
+  pcs-src,
   pkg-config,
   psmisc,
+  pyagentx-src,
   python3Packages,
   ruby,
   systemd,
-  lib,
   ...
 }: let
+  inherit (pacemakerPkgs) pacemaker corosync;
+
   pyagentx = python3Packages.buildPythonPackage {
     pname = "pyagentx";
     version = pyagentx-src.rev;

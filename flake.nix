@@ -5,16 +5,13 @@
       owner = "NixOS";
       repo = "nixpkgs";
       ref = "nixos-unstable";
-
-      # FIXME: build fails on latest unstable
-      rev = "612f97239e2cc474c13c9dafa0df378058c5ad8d";
     };
 
     nixpkgs-pacemaker = {
       type = "github";
-      owner = "mitchty";
+      owner = "matt1432";
       repo = "nixpkgs";
-      ref = "corosync-pacemaker-ocf";
+      ref = "ocf-fix";
     };
 
     # srcs
@@ -55,7 +52,10 @@
         attrs system pkgs);
   in {
     packages = perSystem (system: pkgs: {
-      pcs = pkgs.callPackage ./pkgs {inherit pkgs pcs-src pyagentx-src;};
+      pcs = pkgs.callPackage ./pkgs {
+        inherit pkgs pcs-src pyagentx-src;
+        pacemakerPkgs = nixpkgs-pacemaker.legacyPackages.${system};
+      };
       default = self.packages.${system}.pcs;
     });
 
