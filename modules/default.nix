@@ -8,11 +8,9 @@ nixpkgs-pacemaker: self: {
     (lib)
     attrNames
     attrValues
-    boolToString
     concatMapStringsSep
     concatStringsSep
     elemAt
-    fileContents
     filterAttrs
     forEach
     hasAttr
@@ -23,6 +21,7 @@ nixpkgs-pacemaker: self: {
     mkIf
     mkOption
     optionalString
+    removePrefix
     toInt
     types
     ;
@@ -243,14 +242,16 @@ in {
 
     systemd.packages = [cfg.package];
     systemd.services = let
+      tmpCib = "/tmp/pcsd/cib-new.xml";
+
       # Abstract funcs
       concatMapAttrsToString = func: attrs:
         concatMapStringsSep "\n" func (attrValues attrs);
 
       # Resource functions
-      mkGroupCmd = resource: name: toFile:
+      mkGroupCmd = resource: name:
         concatStringsSep " " [
-          "pcs ${optionalString toFile "-f /tmp/group.xml"} resource group add ${resource.group} ${name}"
+          "pcs -f ${tmpCib} resource group add ${resource.group} ${name}"
 
           (optionalString
             (length resource.startAfter != 0)
@@ -269,13 +270,11 @@ in {
 
       mkVirtIp = vip:
         concatStringsSep " " ([
-            "pcs resource create ${vip.id}"
+            "pcs -f ${tmpCib} resource create ${vip.id}"
             "ocf:heartbeat:IPaddr2"
             "ip=${vip.ip}"
             "cidr_netmask=${toString vip.cidr}"
             "nic=${vip.interface}"
-            # Run after group is handled
-            "--disabled"
           ]
           ++ vip.extraArgs
           # FIXME: figure out why this is needed
@@ -283,66 +282,36 @@ in {
 
       mkSystemdResource = res:
         concatStringsSep " " ([
-            "pcs resource create ${res.systemdName}"
+            "pcs -f ${tmpCib} resource create ${res.systemdName}"
             "systemd:${res.systemdName}"
-            # Run after group is handled
-            "--disabled"
           ]
           ++ res.extraArgs);
 
-      resourceTypeInfo = resource: toFile:
+      resourceTypeInfo = resource:
         if (hasAttr "id" resource)
         then {
           name = resource.id;
           createCmd = mkVirtIp resource;
-          groupCmd = mkGroupCmd resource resource.id toFile;
+          groupCmd = mkGroupCmd resource resource.id;
         }
         else {
           name = resource.systemdName;
           createCmd = mkSystemdResource resource;
-          groupCmd = mkGroupCmd resource resource.systemdName toFile;
+          groupCmd = mkGroupCmd resource resource.systemdName;
         };
 
-      createOrUpdateResource = resource: let
-        resInfo = resourceTypeInfo resource false;
-      in ''
-        if pcs resource config ${resInfo.name}; then
-            # Already exists
+      mkResource = resource:
+        (resourceTypeInfo resource).createCmd;
 
-            # Reset if has extraArgs because we can't make sure
-            # all the settings would be set
-            if ${boolToString (resource.extraArgs != [])}; then
-                pcs resource delete ${resInfo.name}
-                ${resInfo.createCmd}
-
-            elif [[ $(resourceDiff "${resInfo.name}" "${resInfo.createCmd}") == "different" ]]; then
-                # TODO: use update instead?
-                pcs resource delete ${resInfo.name}
-                ${resInfo.createCmd}
-            fi
-
-        else
-            # Doesn't exist
-            ${resInfo.createCmd}
-        fi
-      '';
-
-      addToGroupGeneric = resource: toFile: let
-        resInfo = resourceTypeInfo resource toFile;
+      addToGroup = resource: let
+        resInfo = resourceTypeInfo resource;
       in
         optionalString
         (!(isNull resource.group))
-        "pcs ${optionalString toFile "-f /tmp/group.xml"} resource group add ${resource.group} ${resInfo.name}";
+        "pcs -f ${tmpCib} resource group add ${resource.group} ${resInfo.name}";
 
-      addToGroup = resource:
-        addToGroupGeneric resource false;
-
-      addToGroupTest = resource:
-        addToGroupGeneric resource true;
-
-
-      handlePosInGroupGeneric = resource: toFile: let
-        resInfo = resourceTypeInfo resource toFile;
+      handlePosInGroup = resource: let
+        resInfo = resourceTypeInfo resource;
       in
         optionalString
         (
@@ -351,25 +320,8 @@ in {
             resource.startAfter != [] || resource.startBefore != []
           )
         )
-        "${resInfo.groupCmd}";
-
-      handlePosInGroup = resource:
-        handlePosInGroupGeneric resource false;
-
-      handlePosInGroupTest = resource:
-        handlePosInGroupGeneric resource true;
-
-
-      enableResourceGeneric = resource: toFile: let
-        resInfo = resourceTypeInfo resource toFile;
-      in "pcs ${optionalString toFile "-f /tmp/group.xml"} resource enable ${resInfo.name}";
-
-      enableResource = resource:
-        enableResourceGeneric resource false;
-
-      enableResourceTest = resource:
-        enableResourceGeneric resource true;
-
+        # Doesn't work when applying to tmpCib
+        "pcs ${removePrefix "pcs -f ${tmpCib}" resInfo.groupCmd}";
 
       # Important vars
       mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
@@ -378,26 +330,12 @@ in {
     in
       {
         "pcsd-setup" = {
-          path = with pkgs; let
-            xmldiff = writeShellApplication {
-              name = "xmldiff";
-              runtimeInputs = [libxml2 diffutils];
-              text = fileContents ./bin/xmldiff.sh;
-            };
-
-            resourceDiff = writeShellApplication {
-              name = "resourceDiff";
-              runtimeInputs = [cfg.package xmldiff];
-              text = fileContents ./bin/resourceDiff.sh;
-            };
-          in [
+          path = with pkgs; [
             pacemaker
             cfg.package
             shadow
             jq
             diffutils
-            xmldiff
-            resourceDiff
           ];
 
           script = ''
@@ -406,6 +344,8 @@ in {
 
             # The config needs to be installed from one node only
             if [ "$(uname -n)" = "${mainNode}" ]; then
+                # TODO: add check for first run
+
                 # We want to reset the cluster completely if
                 # there is any changes in the corosync config
                 # to make sure it is setup correctly
@@ -426,43 +366,29 @@ in {
 
                 # Auth every node
                 pcs host auth ${nodeNames} -u hacluster -p $(cat ${cfg.clusterUserPasswordFile})
+                # Query old config
+                rm -rf /tmp/pcsd
+                mkdir -p /tmp/pcsd
+
+                cibadmin --query > /tmp/pcsd/cib-old.xml
 
                 # Disable stonith and quorum if the cluster
                 # only has 2 or less nodes
             ${optionalString (length cfg.nodes <= 2) ''
-              pcs property set stonith-enabled=false
-              pcs property set no-quorum-policy=ignore
+              pcs -f ${tmpCib} property set stonith-enabled=false
+              pcs -f ${tmpCib} property set no-quorum-policy=ignore
             ''}
 
-                # Delete all groups
-                delGroups() {
-                    pcs resource config --output-format json | jq '.["groups"][].id' -r |
-                    while read id ; do
-                        pcs $1 resource group delete $id
-                    done
-                }
-
-                # Test for changes in groups
-                rm -rf /tmp/{cib-old.xml,group.xml}
-                cibadmin --query > /tmp/cib-old.xml
-                cp /tmp/cib-old.xml /tmp/group.xml
-                delGroups "-f /tmp/group.xml"
-
-            ${concatMapAttrsToString addToGroupTest resEnabled}
-            ${concatMapAttrsToString handlePosInGroupTest resEnabled}
-            ${concatMapAttrsToString enableResourceTest resEnabled}
-
                 # Setup resources
-            ${concatMapAttrsToString createOrUpdateResource resEnabled}
-
-                # If difference, redo all groups
-                if ! cmp <(tail -n +2 /tmp/cib-old.xml) <(tail -n +2 /tmp/group.xml); then
-                    delGroups
+            ${concatMapAttrsToString mkResource resEnabled}
             ${concatMapAttrsToString addToGroup resEnabled}
-            ${concatMapAttrsToString handlePosInGroup resEnabled}
-            ${concatMapAttrsToString enableResource resEnabled}
-                fi
 
+                crm_diff --no-version -o /tmp/pcsd/cib-old.xml -n ${tmpCib} |
+                cibadmin --patch --xml-pipe
+
+            ${concatMapAttrsToString handlePosInGroup resEnabled}
+
+                rm -rf /tmp/pcsd
             fi
           '';
 
