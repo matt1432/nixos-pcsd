@@ -36,11 +36,11 @@
     "pcs-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1707226128,
-        "narHash": "sha256-ZWE2Ruk3cSY9v/4FqrorBFRUZtDodUoNWIyXPMscqQc=",
+        "lastModified": 1707412104,
+        "narHash": "sha256-chMFztmrRtsEM0BjqvYhU9HxVQE7/GREflMj7N3tV8U=",
         "owner": "ClusterLabs",
         "repo": "pcs",
-        "rev": "f251384cd828ae701212a2bdc3d1c273034a053f",
+        "rev": "f03b730cee3eca1f354f19e69f6a8e120d50a706",
         "type": "github"
       },
       "original": {
