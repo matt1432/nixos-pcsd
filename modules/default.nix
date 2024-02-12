@@ -456,7 +456,7 @@ in {
             ${concatMapAttrsToString createOrUpdateResource resEnabled}
 
                 # If difference, redo all groups
-                if crm_diff --original /tmp/cib-old.xml --new /tmp/group.xml; then
+                if ! cmp <(tail -n +2 /tmp/cib-old.xml) <(tail -n +2 /tmp/group.xml); then
                     delGroups
             ${concatMapAttrsToString addToGroup resEnabled}
             ${concatMapAttrsToString handlePosInGroup resEnabled}
