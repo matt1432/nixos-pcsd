@@ -466,6 +466,8 @@ in {
             fi
           '';
 
+          wantedBy = ["multi-user.target"];
+
           after = [
             "corosync.service"
             "pacemaker.service"
