@@ -248,9 +248,9 @@ in {
         concatMapStringsSep "\n" func (attrValues attrs);
 
       # Resource functions
-      mkGroupCmd = resource: name:
+      mkGroupCmd = resource: name: toFile:
         concatStringsSep " " [
-          "pcs resource group add ${resource.group} ${name}"
+          "pcs ${optionalString toFile "-f /tmp/group.xml"} resource group add ${resource.group} ${name}"
 
           (optionalString
             (length resource.startAfter != 0)
@@ -290,21 +290,21 @@ in {
           ]
           ++ res.extraArgs);
 
-      resourceTypeInfo = resource:
+      resourceTypeInfo = resource: toFile:
         if (hasAttr "id" resource)
         then {
           name = resource.id;
           createCmd = mkVirtIp resource;
-          groupCmd = mkGroupCmd resource resource.id;
+          groupCmd = mkGroupCmd resource resource.id toFile;
         }
         else {
           name = resource.systemdName;
           createCmd = mkSystemdResource resource;
-          groupCmd = mkGroupCmd resource resource.systemdName;
+          groupCmd = mkGroupCmd resource resource.systemdName toFile;
         };
 
       createOrUpdateResource = resource: let
-        resInfo = resourceTypeInfo resource;
+        resInfo = resourceTypeInfo resource false;
       in ''
         if pcs resource config ${resInfo.name}; then
             # Already exists
@@ -327,15 +327,22 @@ in {
         fi
       '';
 
-      addToGroup = resource: let
-        resInfo = resourceTypeInfo resource;
+      addToGroupGeneric = resource: toFile: let
+        resInfo = resourceTypeInfo resource toFile;
       in
         optionalString
         (!(isNull resource.group))
-        "pcs resource group add ${resource.group} ${resInfo.name}";
+        "pcs ${optionalString toFile "-f /tmp/group.xml"} resource group add ${resource.group} ${resInfo.name}";
 
-      handlePosInGroup = resource: let
-        resInfo = resourceTypeInfo resource;
+      addToGroup = resource:
+        addToGroupGeneric resource false;
+
+      addToGroupTest = resource:
+        addToGroupGeneric resource true;
+
+
+      handlePosInGroupGeneric = resource: toFile: let
+        resInfo = resourceTypeInfo resource toFile;
       in
         optionalString
         (
@@ -346,9 +353,23 @@ in {
         )
         "${resInfo.groupCmd}";
 
-      enableResource = resource: let
-        resInfo = resourceTypeInfo resource;
-      in "pcs resource enable ${resInfo.name}";
+      handlePosInGroup = resource:
+        handlePosInGroupGeneric resource false;
+
+      handlePosInGroupTest = resource:
+        handlePosInGroupGeneric resource true;
+
+
+      enableResourceGeneric = resource: toFile: let
+        resInfo = resourceTypeInfo resource toFile;
+      in "pcs ${optionalString toFile "-f /tmp/group.xml"} resource enable ${resInfo.name}";
+
+      enableResource = resource:
+        enableResourceGeneric resource false;
+
+      enableResourceTest = resource:
+        enableResourceGeneric resource true;
+
 
       # Important vars
       mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
@@ -414,17 +435,33 @@ in {
             ''}
 
                 # Delete all groups
-                pcs resource config --output-format json | jq '.["groups"][].id' -r |
-                while read id ; do
-                    pcs resource group delete $id
-                done
+                delGroups() {
+                    pcs resource config --output-format json | jq '.["groups"][].id' -r |
+                    while read id ; do
+                        pcs $1 resource group delete $id
+                    done
+                }
+
+                # Test for changes in groups
+                rm -rf /tmp/{cib-old.xml,group.xml}
+                cibadmin --query > /tmp/cib-old.xml
+                cp /tmp/cib-old.xml /tmp/group.xml
+                delGroups "-f /tmp/group.xml"
+
+            ${concatMapAttrsToString addToGroupTest resEnabled}
+            ${concatMapAttrsToString handlePosInGroupTest resEnabled}
+            ${concatMapAttrsToString enableResourceTest resEnabled}
 
                 # Setup resources
             ${concatMapAttrsToString createOrUpdateResource resEnabled}
-            # FIXME: resources are restarted when changing group pos?
+
+                # If difference, redo all groups
+                if crm_diff --original /tmp/cib-old.xml --new /tmp/group.xml; then
+                    delGroups
             ${concatMapAttrsToString addToGroup resEnabled}
             ${concatMapAttrsToString handlePosInGroup resEnabled}
             ${concatMapAttrsToString enableResource resEnabled}
+                fi
 
             fi
           '';
