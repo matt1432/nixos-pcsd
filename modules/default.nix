@@ -315,7 +315,7 @@ in {
                 pcs resource delete ${resInfo.name}
                 ${resInfo.createCmd}
 
-            elif [[ $(xmldiff "${resInfo.name}" "${resInfo.createCmd}") == "different" ]]; then
+            elif [[ $(resourceDiff "${resInfo.name}" "${resInfo.createCmd}") == "different" ]]; then
                 # TODO: use update instead?
                 pcs resource delete ${resInfo.name}
                 ${resInfo.createCmd}
@@ -356,19 +356,27 @@ in {
       resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
     in
       {
-        "pacemaker-setup" = {
-          path = with pkgs; [
+        "pcsd-setup" = {
+          path = with pkgs; let
+            xmldiff = writeShellApplication {
+              name = "xmldiff";
+              runtimeInputs = [libxml2 diffutils];
+              text = fileContents ./bin/xmldiff.sh;
+            };
+
+            resourceDiff = writeShellApplication {
+              name = "resourceDiff";
+              runtimeInputs = [cfg.package xmldiff];
+              text = fileContents ./bin/resourceDiff.sh;
+            };
+          in [
             pacemaker
             cfg.package
             shadow
             jq
             diffutils
-
-            (writeShellApplication {
-              name = "xmldiff";
-              runtimeInputs = [cfg.package libxml2 diffutils];
-              text = fileContents ./bin/xmldiff.sh;
-            })
+            xmldiff
+            resourceDiff
           ];
 
           script = ''
@@ -400,7 +408,7 @@ in {
 
                 # Disable stonith and quorum if the cluster
                 # only has 2 or less nodes
-            ${optionalString (length cfg.nodes < 3) ''
+            ${optionalString (length cfg.nodes <= 2) ''
               pcs property set stonith-enabled=false
               pcs property set no-quorum-policy=ignore
             ''}
