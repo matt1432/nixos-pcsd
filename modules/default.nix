@@ -21,7 +21,6 @@ nixpkgs-pacemaker: self: {
     mkIf
     mkOption
     optionalString
-    removePrefix
     toInt
     types
     ;
@@ -251,7 +250,8 @@ in {
       # Resource functions
       mkGroupCmd = resource: name:
         concatStringsSep " " [
-          "pcs -f ${tmpCib} resource group add ${resource.group} ${name}"
+          # Doesn't work when applying to tmpCib so no '-f'
+          "pcs resource group add ${resource.group} ${name}"
 
           (optionalString
             (length resource.startAfter != 0)
@@ -320,8 +320,7 @@ in {
             resource.startAfter != [] || resource.startBefore != []
           )
         )
-        # Doesn't work when applying to tmpCib
-        "pcs ${removePrefix "pcs -f ${tmpCib}" resInfo.groupCmd}";
+        resInfo.groupCmd;
 
       # Important vars
       mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
