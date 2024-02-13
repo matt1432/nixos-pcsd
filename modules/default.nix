@@ -14,7 +14,6 @@ nixpkgs-pacemaker: self: {
     concatStringsSep
     elemAt
     filterAttrs
-    flatten
     forEach
     hasAttr
     length
@@ -257,7 +256,12 @@ in {
       };
 
     resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
-    posParams = flatten (mapAttrsToList (n: v: v.startAfter ++ v.startBefore) resEnabled);
+    resourcesWithPositions =
+      mapAttrsToList (n: v: {
+        inherit (resourceTypeInfo v) name;
+        constraints = v.startAfter ++ v.startBefore;
+      })
+      resEnabled;
   in
     mkIf cfg.enable {
       assertions = [
@@ -283,16 +287,23 @@ in {
         }
         {
           assertion =
-            # every startBefore and startAfter
+            # For every resource
             all (
-              x:
-                # Needs to have a corresponding resource name
-                any (y: x == y) resNames
+              resource:
+              # For every startBefore and startAfter
+                all (
+                  constraint:
+                    # A constraint needs to have a corresponding resource name
+                    (any (resName: constraint == resName) resNames)
+                    # And can't be its own resource name
+                    && constraint != resource.name
+                )
+                resource.constraints
             )
-            posParams;
+            resourcesWithPositions;
           message = ''
             The parameters in services.pcsd.<systemdResources|virtualIps>.<name>.<startAfter|startBefore>
-            need to correspond to a name of a virtualIP or a systemd resource.
+            need to correspond to a name of a virtualIP or a systemd resource and cannot be the same as <name>.
           '';
         }
       ];
