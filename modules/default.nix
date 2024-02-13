@@ -225,14 +225,16 @@ in {
       password   include      systemd-user
       session    include      systemd-user
     '';
+
     environment.systemPackages = [
       cfg.package
       pkgs.ocf-resource-agents
       pkgs.pacemaker
     ];
 
-    # This user is created in the pacemaker service
-    # pcsd needs it to have the "haclient" group and a password
+    # This user is created in the pacemaker service.
+    # pcsd needs it to have the "haclient" group and
+    # a password which is taken care of in the systemd unit
     users.users.hacluster = {
       isSystemUser = true;
       extraGroups = ["haclient"];
@@ -276,9 +278,7 @@ in {
             "cidr_netmask=${toString vip.cidr}"
             "nic=${vip.interface}"
           ]
-          ++ vip.extraArgs
-          # FIXME: figure out why this is needed
-          ++ ["--force"]);
+          ++ vip.extraArgs);
 
       mkSystemdResource = res:
         concatStringsSep " " ([
@@ -346,7 +346,7 @@ in {
                 # TODO: add check for first run
 
                 # We want to reset the cluster completely if
-                # there is any changes in the corosync config
+                # there are any changes in the corosync config
                 # to make sure it is setup correctly
                 CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '.["nodes"]')
                 CONFIG_NODES=$(echo '${toJSON cfg.nodes}' | jq --sort-keys)
@@ -365,28 +365,30 @@ in {
 
                 # Auth every node
                 pcs host auth ${nodeNames} -u hacluster -p $(cat ${cfg.clusterUserPasswordFile})
-                # Query old config
+
+                # Delete files from potential failed runs
                 rm -rf /tmp/pcsd
                 mkdir -p /tmp/pcsd
 
+                # Query old config
                 cibadmin --query > /tmp/pcsd/cib-old.xml
 
-                # Disable stonith and quorum if the cluster
-                # only has 2 or less nodes
+                # Setup tmpCib
             ${optionalString (length cfg.nodes <= 2) ''
               pcs -f ${tmpCib} property set stonith-enabled=false
               pcs -f ${tmpCib} property set no-quorum-policy=ignore
             ''}
-
-                # Setup resources
             ${concatMapAttrsToString mkResource resEnabled}
             ${concatMapAttrsToString addToGroup resEnabled}
 
+                # Apply diff between old and new config to current CIB
                 crm_diff --no-version -o /tmp/pcsd/cib-old.xml -n ${tmpCib} |
                 cibadmin --patch --xml-pipe
 
+                # Group pos doesn't work in tmpCib so we apply it on current CIB
             ${concatMapAttrsToString handlePosInGroup resEnabled}
 
+                # Cleanup
                 rm -rf /tmp/pcsd
             fi
           '';
