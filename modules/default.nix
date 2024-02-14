@@ -382,7 +382,10 @@ in {
 
               # The config needs to be installed from one node only
               if [ "$(uname -n)" = "${mainNode}" ]; then
-                  # TODO: add check for first run
+                  # Check for first run
+                  # TODO: test if this works
+                  if ! pcs status; then
+                      pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
                   # We want to reset the cluster completely if
                   # there are any changes in the corosync config
@@ -394,8 +397,8 @@ in {
                   CURRENT_NAME=$(pcs cluster config --output-format json | jq '.["cluster_name"]')
                   CONFIG_NAME="\"${cfg.clusterName}\""
 
-                  if ! cmp -s <(echo "$CURRENT_NODES") <(echo "$CONFIG_NODES") ||
-                     ! cmp -s <(echo "$CURRENT_NAME") <(echo "$CONFIG_NAME"); then
+                  elif ! cmp -s <(echo "$CURRENT_NODES") <(echo "$CONFIG_NODES") ||
+                       ! cmp -s <(echo "$CURRENT_NAME") <(echo "$CONFIG_NAME"); then
                       echo "Resetting cluster"
                       pcs stop
                       pcs destroy
