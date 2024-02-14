@@ -14,6 +14,7 @@ nixpkgs-pacemaker: self: {
     concatStringsSep
     elemAt
     filterAttrs
+    findFirst
     forEach
     hasAttr
     length
@@ -246,11 +247,13 @@ in {
       if (hasAttr "id" resource)
       then {
         name = resource.id;
+        type = "virtualIps";
         createCmd = mkVirtIp resource;
         groupCmd = mkGroupCmd resource resource.id;
       }
       else {
         name = resource.systemdName;
+        type = "systemdResources";
         createCmd = mkSystemdResource resource;
         groupCmd = mkGroupCmd resource resource.systemdName;
       };
@@ -258,10 +261,29 @@ in {
     resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
     resourcesWithPositions =
       mapAttrsToList (n: v: {
-        inherit (resourceTypeInfo v) name;
+        inherit (resourceTypeInfo v) name type;
         constraints = v.startAfter ++ v.startBefore;
       })
       resEnabled;
+
+    errRes =
+      # Find the first resource that has errors
+      findFirst (
+        resource:
+          !(
+            # For every startBefore and startAfter
+            all (
+              constraint:
+              # A constraint needs to have a corresponding resource name
+                (any (resName: constraint == resName) resNames)
+                # And can't be its own resource name
+                && constraint != resource.name
+            )
+            resource.constraints
+          )
+      )
+      null
+      resourcesWithPositions;
   in
     mkIf cfg.enable {
       assertions = [
@@ -286,24 +308,11 @@ in {
           '';
         }
         {
-          assertion =
-            # For every resource
-            all (
-              resource:
-              # For every startBefore and startAfter
-                all (
-                  constraint:
-                    # A constraint needs to have a corresponding resource name
-                    (any (resName: constraint == resName) resNames)
-                    # And can't be its own resource name
-                    && constraint != resource.name
-                )
-                resource.constraints
-            )
-            resourcesWithPositions;
+          # We want there to be no errRes to have a functioning config
+          assertion = errRes == null;
           message = ''
-            The parameters in services.pcsd.<systemdResources|virtualIps>.<name>.<startAfter|startBefore>
-            need to correspond to a name of a virtualIP or a systemd resource and cannot be the same as <name>.
+            The parameters in services.pcsd.${errRes.type}.${errRes.name}.<startAfter|startBefore>
+            need to correspond to the name of a virtualIP or a systemd resource and cannot be "${errRes.name}".
           '';
         }
       ];
