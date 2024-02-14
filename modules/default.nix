@@ -15,7 +15,6 @@ nixpkgs-pacemaker: self: {
     elemAt
     filterAttrs
     findFirst
-    forEach
     hasAttr
     length
     mapAttrsToList
@@ -25,7 +24,6 @@ nixpkgs-pacemaker: self: {
     mkIf
     mkOption
     optionalString
-    toInt
     types
     ;
   inherit (builtins) listToAttrs toJSON;
@@ -59,40 +57,24 @@ in {
     };
 
     nodes = mkOption {
-      type = with types;
-        listOf (submodule {
-          options = {
-            name = mkOption {
-              type = str;
-              description = lib.mdDoc "Node name";
-            };
-            nodeid = mkOption {
-              type = str;
-              description = lib.mdDoc "Node ID number";
-            };
-            addrs = mkOption {
-              description = lib.mdDoc "List of addresses, one for each ring.";
-              type = listOf (submodule {
-                options = {
-                  addr = mkOption {
-                    type = str;
-                  };
-                  # FIXME: what is this?
-                  link = mkOption {
-                    type = str;
-                    default = "0";
-                  };
-                  # FIXME: this should be an enum
-                  type = mkOption {
-                    type = str;
-                    default = "IPv4";
-                  };
-                };
-              });
-            };
-          };
-        });
+      description = mdDoc "List of nodes for the corosync config";
       default = [];
+      type = with types; listOf (submodule {
+        options = {
+          nodeid = mkOption {
+            type = int;
+            description = mdDoc "Node ID number";
+          };
+          name = mkOption {
+            type = str;
+            description = mdDoc "Node name";
+          };
+          ring_addrs = mkOption {
+            type = listOf str;
+            description = mdDoc "List of addresses, one for each ring.";
+          };
+        };
+      });
     };
 
     # PCS options
@@ -324,11 +306,7 @@ in {
       services.corosync = {
         enable = true;
         clusterName = mkForce cfg.clusterName;
-        nodelist = mkForce (forEach cfg.nodes (node: {
-          inherit (node) name;
-          nodeid = toInt node.nodeid;
-          ring_addrs = forEach node.addrs (a: a.addr);
-        }));
+        nodelist = mkForce cfg.nodes;
       };
 
       environment.etc."corosync/authkey" = {
@@ -409,7 +387,7 @@ in {
                   # We want to reset the cluster completely if
                   # there are any changes in the corosync config
                   # to make sure it is setup correctly
-                  CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '.["nodes"]')
+                  CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '[.["nodes"] | .[] | .ring_addrs = (.addrs | map(.addr)) | del(.addrs) | .nodeid = (.nodeid | tonumber)]')
                   CONFIG_NODES=$(echo '${toJSON cfg.nodes}' | jq --sort-keys)
 
                   # Same thing if the name changes
