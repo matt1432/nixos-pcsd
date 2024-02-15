@@ -39,7 +39,8 @@ in {
 
     # Corosync options
     corosyncKeyFile = mkOption {
-      type = types.path;
+      type = with types; nullOr path;
+      default = null;
     };
 
     clusterName = mkOption {
@@ -84,7 +85,8 @@ in {
     };
 
     clusterUserPasswordFile = mkOption {
-      type = types.path;
+      type = with types; nullOr path;
+      default = null;
       description = mdDoc ''
         Required path to a file containing the password in clear text
       '';
