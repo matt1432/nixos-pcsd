@@ -386,7 +386,6 @@ in {
               # The config needs to be installed from one node only
               if [ "$(uname -n)" = "${mainNode}" ]; then
                   # Check for first run
-                  # TODO: test if this works
                   if ! pcs status; then
                       pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
 
