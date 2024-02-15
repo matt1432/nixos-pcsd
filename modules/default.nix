@@ -93,6 +93,8 @@ in {
       '';
     };
 
+    # TODO: add extraResources for custom resources
+
     systemdResources = mkOption {
       default = {};
       type = with types;
