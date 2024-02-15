@@ -4,6 +4,10 @@ repo_url: https://github.com/matt1432/nixos-pcsd
 
 theme:
   name: material
+
+  font:
+    text: Noto Sans
+
   palette:
     # Palette toggle for automatic mode
     - media: "(prefers-color-scheme)"
