@@ -17,6 +17,7 @@ nixpkgs-pacemaker: self: {
     findFirst
     hasAttr
     length
+    literalExpression
     mapAttrsToList
     mdDoc
     mkEnableOption
@@ -30,6 +31,15 @@ nixpkgs-pacemaker: self: {
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
+
+  startDesc = after:
+    mdDoc ''
+      Determines what resources need to be started ${if after then "after" else "before"}
+      this one.  
+      Requires a group.  
+      Can only be the name of resources in the same group and cannot
+      be the name of this ressource.
+    '';
 in {
   disabledModules = [pacemakerPath];
   imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
@@ -40,40 +50,63 @@ in {
     # Corosync options
     corosyncKeyFile = mkOption {
       type = with types; nullOr path;
-      default = null;
+      description = mdDoc ''
+        Required path to a file containing the key for corosync.  
+        See `corosync-keygen(8)`.
+      '';
     };
 
     clusterName = mkOption {
       type = types.str;
       default = "nixcluster";
+      description = mdDoc ''
+        Name of the cluster. This option will be passed to `services.corosync.clusterName`.
+      '';
     };
 
+    # TODO: use nodeid instead
     mainNodeIndex = mkOption {
       type = types.int;
       default = 0;
       description = mdDoc ''
-        The index of the node you want to take care of updating
-        the cluster settings in the nodes list.
+        The index of the node in charge of updating the cluster settings.  
+        This is equivalent to its position in `services.pcsd.nodes`.
       '';
     };
 
     nodes = mkOption {
-      description = mdDoc "List of nodes for the corosync config";
       default = [];
+      description = mdDoc ''
+        List of nodes in the cluster. This option will be passed to `services.corosync.nodelist`.
+      '';
+      example = literalExpression ''
+        [
+          {
+            name = "this Machine's Hostname";
+            nodeid = 1;
+            ring_addrs = [
+              # This is where your machine's local ips go
+              "192.168.0.255"
+            ];
+          }
+
+          # the other nodes of your cluster go here
+        ]
+      '';
       type = with types;
         listOf (submodule {
           options = {
             nodeid = mkOption {
               type = int;
-              description = mdDoc "Node ID number";
+              description = mdDoc "Node ID number.";
             };
             name = mkOption {
               type = str;
-              description = mdDoc "Node name";
+              description = mdDoc "Node name.";
             };
             ring_addrs = mkOption {
               type = listOf str;
-              description = mdDoc "List of addresses, one for each ring.";
+              description = mdDoc "List of IP addresses, one for each ring.";
             };
           };
         });
@@ -83,13 +116,17 @@ in {
     package = mkOption {
       type = types.package;
       default = self.packages.x86_64-linux.default;
+      defaultText = literalExpression "pcsd.packages.x86_64-linux.default";
+      description = ''
+        The pcs package to use.  
+        By default, this option will use the `packages.default` as exposed by this flake.
+      '';
     };
 
     clusterUserPasswordFile = mkOption {
       type = with types; nullOr path;
-      default = null;
       description = mdDoc ''
-        Required path to a file containing the password in clear text
+        Required path to a file containing the password of the `hacluster` user in clear text.
       '';
     };
 
@@ -97,38 +134,71 @@ in {
 
     systemdResources = mkOption {
       default = {};
+      description = mdDoc ''
+        An attribute set that represents all the systemd services that will
+        be managed by pcsd.
+      '';
+      example = literalExpression ''
+        systemdResources = {
+          "caddy" = {
+            enable = true;
+            group = "caddy-grp";
+          };
+
+          "headscale" = {
+            enable = true;
+            group = "caddy-grp";
+            startAfter = ["caddy"];
+          };
+        }
+      '';
       type = with types;
         attrsOf (submodule ({name, ...}: {
           options = {
             enable = mkOption {
-              default = true;
               type = types.bool;
+              default = true;
+              description = mdDoc ''
+                Whether this service is managed by pcs or not. If not enabled,
+                this service can only be started by a user manually.
+              '';
             };
 
             systemdName = mkOption {
-              default = name;
               type = types.str;
+              default = name;
+              description = mdDoc ''
+                The name of the systemd unit file without '.service'.  
+                By default, this option will use the name of this attribute.
+              '';
             };
 
             group = mkOption {
               type = with types; nullOr str;
+              description = mdDoc ''
+                The name of the group in which we want to place this resource.  
+                This allows multiple resources to always be on the same node and
+                can also make the order in which the resources start configurable.
+              '';
             };
 
             startAfter = mkOption {
-              default = [];
               type = with types; listOf str;
+              default = [];
+              description = startDesc true;
             };
 
             startBefore = mkOption {
-              default = [];
               type = with types; listOf str;
+              default = [];
+              description = startDesc false;
             };
 
             extraArgs = mkOption {
               type = with types; listOf str;
               default = [];
               description = mdDoc ''
-                Additional command line options to pcs when making a systemd resource
+                Additional command line options added to pcs commands when making a systemd resource.
               '';
             };
           };
@@ -137,47 +207,77 @@ in {
 
     virtualIps = mkOption {
       default = {};
+      description = mdDoc ''
+        An attribute set that represents all the virtual IPs that will
+        be managed by pcsd.
+      '';
+      example = literalExpression ''
+        virtualIps = {
+          "caddy-vip" = {
+            ip = "10.0.0.130";
+            interface = "eno1";
+            group = "caddy-grp";
+            startBefore = ["caddy"];
+          };
+        }
+      '';
       type = with types;
         attrsOf (submodule ({name, ...}: {
           options = {
             id = mkOption {
               type = types.str;
               default = name;
+              description = mdDoc ''
+                The name of the resource as pacemaker sees it.  
+                By default, this option will use the name of this attribute.
+              '';
             };
 
+            # TODO: add assertion to make sure the interface exists
             interface = mkOption {
-              default = "eno1";
               type = types.str;
+              default = "eno1";
+              description = mdDoc "The network interface this IP will be bound to.";
             };
 
             ip = mkOption {
+              # TODO: use strMatching instead
               type = types.str;
+              description = mdDoc "The actual IP address.";
             };
 
             cidr = mkOption {
-              default = 24;
               type = types.int;
+              default = 24;
+              description = mdDoc "The CIDR range of the IP.";
             };
 
             group = mkOption {
               type = with types; nullOr str;
+              description = mdDoc ''
+                The name of the group in which we want to place this resource.  
+                This allows multiple resources to always be on the same node and
+                can also make the order in which the resources start configurable.
+              '';
             };
 
             startAfter = mkOption {
-              default = [];
               type = with types; listOf str;
+              default = [];
+              description = startDesc true;
             };
 
             startBefore = mkOption {
-              default = [];
               type = with types; listOf str;
+              default = [];
+              description = startDesc false;
             };
 
             extraArgs = mkOption {
               type = with types; listOf str;
               default = [];
               description = mdDoc ''
-                Additional command line options to pcs when making a virtual IP
+                Additional command line options added to pcs commands when making a virtual IP.
               '';
             };
           };
@@ -253,6 +353,7 @@ in {
       })
       resEnabled;
 
+    # TODO: make sure the elements reference resources in the same group
     errRes =
       # Find the first resource that has errors
       findFirst (
