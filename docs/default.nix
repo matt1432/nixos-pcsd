@@ -7,6 +7,11 @@
   ...
 }: let
   options-doc = callPackage ./options-doc.nix {inherit self;};
+  syntaxReplace = ''
+    *Example:*
+
+    ```'';
+  syntaxSettings = ''nix linenums="1"'';
 in
   stdenv.mkDerivation {
     src = ../.;
@@ -25,6 +30,9 @@ in
       # FIXME: https://github.com/mkdocs/mkdocs/issues/3563
       substituteInPlace "./docs/options.md" \
         --replace '\<name>' '<name\>'
+
+      substituteInPlace "./docs/options.md" \
+        --replace '${syntaxReplace}' '${syntaxReplace}${syntaxSettings}'
 
       mkdocs build
     '';
