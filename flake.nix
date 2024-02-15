@@ -52,6 +52,7 @@
         attrs system pkgs);
   in {
     packages = perSystem (system: pkgs: {
+      docs = pkgs.callPackage ./docs {inherit pkgs self;};
       pcs = pkgs.callPackage ./pkgs {
         inherit pkgs pcs-src pyagentx-src;
         pacemakerPkgs = nixpkgs-pacemaker.legacyPackages.${system};

@@ -1,0 +1,6 @@
+site_name: NixOS-pcsd
+
+repo_url: https://github.com/matt1432/nixos-pcsd
+
+theme:
+  name: material
