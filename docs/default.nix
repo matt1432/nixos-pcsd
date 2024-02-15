@@ -20,19 +20,21 @@ in
 
     buildPhase = ''
       cp -a ${./mkdocs.yml} ./mkdocs.yml
-      cp -a ${options-doc} "./docs/nixos-options.md"
+      cp -a ${options-doc} "./docs/options.md"
 
       # FIXME: https://github.com/mkdocs/mkdocs/issues/3563
-      substituteInPlace "./docs/nixos-options.md" \
+      substituteInPlace "./docs/options.md" \
         --replace '\<name>' '<name\>'
 
       mkdocs build
     '';
 
     installPhase = ''
-      rm site/*.nix
+      rm site/*.nix site/deploy.sh
+
       mkdir -p $out
       mv site $out/docs
+
       mv $out/docs/mkdocs.yml $out/
     '';
   }
