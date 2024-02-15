@@ -4,6 +4,10 @@ This is a Nix flake containing the package [pcs](https://github.com/ClusterLabs/
 and a module for it that allows you to manage a Pacemaker cluster
 declaratively in nix code.
 
+## Docs
+
+You can read about the options this module exposes here: <https://matt1432.github.io/nixos-pcsd/options/>
+
 ## Usage
 
 In your `flake.nix` inputs:
