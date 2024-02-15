@@ -77,6 +77,32 @@
           bundix
         ];
       };
+
+      docs = with pkgs; let
+        inputs = [
+          git
+          nix
+          mkdocs
+          ghp-import
+          python3Packages.mkdocs-material
+          python3Packages.pygments
+        ];
+      in
+        mkShell {
+          packages = [
+            (writeShellApplication {
+              name = "localDeploy";
+              runtimeInputs = inputs;
+              text = "(nix build .#docs && cd result && mkdocs serve)";
+            })
+
+            (writeShellApplication {
+              name = "ghDeploy";
+              runtimeInputs = inputs;
+              text = lib.fileContents ./docs/deploy.sh;
+            })
+          ] ++ inputs;
+        };
     });
   };
 }

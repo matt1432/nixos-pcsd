@@ -19,6 +19,6 @@ jobs:
           github_access_token: ${{ secrets.GITHUB_TOKEN }}
 
       - name: Deploy docs
-        run: nix shell nixpkgs#ghp-import --command ./docs/deploy.sh
+        run: nix develop .#docs -c ghDeploy
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
