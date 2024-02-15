@@ -7,6 +7,7 @@
   ...
 }: let
   options-doc = callPackage ./options-doc.nix {inherit self;};
+
   syntaxReplace = ''
     *Example:*
 
@@ -25,13 +26,13 @@ in
 
     buildPhase = ''
       cp -a ${./mkdocs.yml} ./mkdocs.yml
-      cp -a ${options-doc} "./docs/options.md"
+      cp -a ${options-doc}/* "./docs/"
 
       # FIXME: https://github.com/mkdocs/mkdocs/issues/3563
-      substituteInPlace "./docs/options.md" \
+      substituteInPlace ./docs/* \
         --replace '\<name>' '<name\>'
 
-      substituteInPlace "./docs/options.md" \
+      substituteInPlace ./docs/* \
         --replace '${syntaxReplace}' '${syntaxReplace}${syntaxSettings}'
 
       mkdocs build

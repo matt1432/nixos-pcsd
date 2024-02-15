@@ -15,16 +15,36 @@
     ];
   };
 
-  optionsDoc = nixosOptionsDoc {
-    # Remove '_module' and pacemaker options from the generated docs
-    options = removeAttrs (
-      removeAttrs eval.options.services ["pacemaker"]
-    ) ["_module"];
+  # Remove '_module' and pacemaker options from the generated docs
+  options = removeAttrs (
+    removeAttrs eval.options.services ["pacemaker"]
+  ) ["_module"];
 
-    # We lazy
-    warningsAreErrors = false;
+  allOptions = nixosOptionsDoc {
+    inherit options;
+  };
+
+  generalOptions = nixosOptionsDoc {
+    options = removeAttrs eval.options.services.pcsd ["nodes" "systemdResources" "virtualIps"];
+  };
+
+  nodesOptions = nixosOptionsDoc {
+    options = eval.options.services.pcsd.nodes;
+  };
+
+  systemdResOptions = nixosOptionsDoc {
+    options = eval.options.services.pcsd.systemdResources;
+  };
+
+  virtIpOptions = nixosOptionsDoc {
+    options = eval.options.services.pcsd.virtualIps;
   };
 in
-  runCommand "options-doc.md" {} ''
-    cat ${optionsDoc.optionsCommonMark} >> $out
+  runCommand "options-doc" {} ''
+    mkdir $out
+    cat ${allOptions.optionsCommonMark} >> $out/all.md
+    cat ${generalOptions.optionsCommonMark} >> $out/general.md
+    cat ${nodesOptions.optionsCommonMark} >> $out/nodes.md
+    cat ${systemdResOptions.optionsCommonMark} >> $out/systemd-services.md
+    cat ${virtIpOptions.optionsCommonMark} >> $out/virtual-ips.md
   ''

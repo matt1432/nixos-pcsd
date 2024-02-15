@@ -6,7 +6,7 @@ declaratively in nix code.
 
 ## Docs
 
-You can read about the options this module exposes here: <https://matt1432.github.io/nixos-pcsd/options/>
+You can read about the options this module exposes here: <https://matt1432.github.io/nixos-pcsd/all/>
 
 ## Usage
 
