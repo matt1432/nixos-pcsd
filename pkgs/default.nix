@@ -86,7 +86,7 @@ in
         '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd' ""
 
       substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
-	      '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd' ""
+       '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd' ""
     '';
 
     propagatedBuildInputs =

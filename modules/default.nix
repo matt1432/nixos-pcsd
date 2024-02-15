@@ -60,22 +60,23 @@ in {
     nodes = mkOption {
       description = mdDoc "List of nodes for the corosync config";
       default = [];
-      type = with types; listOf (submodule {
-        options = {
-          nodeid = mkOption {
-            type = int;
-            description = mdDoc "Node ID number";
+      type = with types;
+        listOf (submodule {
+          options = {
+            nodeid = mkOption {
+              type = int;
+              description = mdDoc "Node ID number";
+            };
+            name = mkOption {
+              type = str;
+              description = mdDoc "Node name";
+            };
+            ring_addrs = mkOption {
+              type = listOf str;
+              description = mdDoc "List of addresses, one for each ring.";
+            };
           };
-          name = mkOption {
-            type = str;
-            description = mdDoc "Node name";
-          };
-          ring_addrs = mkOption {
-            type = listOf str;
-            description = mdDoc "List of addresses, one for each ring.";
-          };
-        };
-      });
+        });
     };
 
     # PCS options
