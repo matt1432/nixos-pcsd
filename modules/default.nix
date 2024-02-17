@@ -68,13 +68,12 @@ in {
       '';
     };
 
-    # TODO: use nodeid instead
-    mainNodeIndex = mkOption {
-      type = types.int;
-      default = 0;
+    mainNode = mkOption {
+      type = types.str;
+      default = (elemAt cfg.nodes 0).name;
       description = mdDoc ''
-        The index of the node in charge of updating the cluster settings.\
-        This is equivalent to its position in `services.pcsd.nodes`.
+        The name of the node in charge of updating the cluster settings.\
+        Defaults to the first node declared in `services.pcsd.nodes`.
       '';
     };
 
@@ -293,7 +292,6 @@ in {
 
   config = let
     # Important vars
-    mainNode = (elemAt cfg.nodes cfg.mainNodeIndex).name;
     nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
     resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
     tmpCib = "/tmp/pcsd/cib-new.xml";
@@ -406,6 +404,13 @@ in {
           '';
         }
         {
+          assertion = any (node: node.name == cfg.mainNode) cfg.nodes;
+          message = ''
+            The parameter `services.pcsd.mainNode` needs to be the name of
+            an existing node in the cluster.
+          '';
+        }
+        {
           # We want there to be no errRes to have a functioning config
           assertion = errRes == null;
           message = ''
@@ -498,7 +503,7 @@ in {
               echo hacluster:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
 
               # The config needs to be installed from one node only
-              if [ "$(uname -n)" = "${mainNode}" ]; then
+              if [ "$(uname -n)" = "${cfg.mainNode}" ]; then
                   # Check for first run
                   if ! pcs status; then
                       pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
