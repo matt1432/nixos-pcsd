@@ -71,6 +71,7 @@ in {
     mainNode = mkOption {
       type = types.str;
       default = (elemAt cfg.nodes 0).name;
+      defaultText = "Name of your first node";
       description = mdDoc ''
         The name of the node in charge of updating the cluster settings.\
         Defaults to the first node declared in `services.pcsd.nodes`.
