@@ -4,30 +4,20 @@ nixpkgs-pacemaker: self: {
   pkgs,
   ...
 }: let
+  inherit (lib) types literalExpression;
+  inherit (lib.attrsets) attrNames attrValues listToAttrs filterAttrs hasAttr mapAttrsToList;
+  inherit (lib.lists) all any elemAt findFirst length;
+  inherit (lib.modules) mkForce mkIf;
+  inherit (lib.options) mdDoc mkEnableOption mkOption;
   inherit
-    (lib)
-    all
-    any
-    attrNames
-    attrValues
+    (lib.strings)
+    hasInfix
     concatMapStringsSep
     concatStringsSep
-    elemAt
-    filterAttrs
-    findFirst
-    hasAttr
-    length
-    literalExpression
-    mapAttrsToList
-    mdDoc
-    mkEnableOption
-    mkForce
-    mkIf
-    mkOption
     optionalString
-    types
+    removePrefix
+    toJSON
     ;
-  inherit (builtins) listToAttrs toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
@@ -134,8 +124,6 @@ in {
       '';
     };
 
-    # TODO: add extraResources for custom resources
-
     systemdResources = mkOption {
       default = {};
       description = mdDoc ''
@@ -238,7 +226,6 @@ in {
               '';
             };
 
-            # TODO: add assertion to make sure the interface exists
             interface = mkOption {
               type = types.str;
               default = "eno1";
@@ -246,7 +233,6 @@ in {
             };
 
             ip = mkOption {
-              # TODO: use strMatching instead
               type = types.str;
               description = mdDoc "The actual IP address.";
             };
@@ -288,6 +274,21 @@ in {
             };
           };
         }));
+    };
+
+    extraCommands = mkOption {
+      type = with types; listOf (strMatching "^(pcs .*)$");
+      default = [];
+      description = mdDoc ''
+        A list of additional `pcs` commands to run after everything else is setup.\
+        Cannot have the `-f` option.\
+        See `pcs(8)`
+      '';
+      example = literalExpression ''
+        [
+          "pcs property set stonith-enabled=false"
+        ]
+      '';
     };
   };
 
@@ -351,6 +352,11 @@ in {
         createCmd = mkSystemdResource resource;
         groupCmd = mkGroupCmd resource resource.systemdName;
       };
+
+    extraCommands = concatMapStringsSep "\n" (c: let
+      cmd = removePrefix "pcs" c;
+    in "pcs -f ${tmpCib} ${cmd}")
+    cfg.extraCommands;
 
     resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
     groupedRes = filterAttrs (n: v: v.group != null) resEnabled;
@@ -418,6 +424,12 @@ in {
             The parameters in services.pcsd.${errRes.type}.${errRes.name}.<startAfter|startBefore>
             need to correspond to the name of a virtualIP or a systemd resource that is a member
             of the same group and cannot be "${errRes.name}".
+          '';
+        }
+        {
+          assertion = all (c: !hasInfix "-f" c) cfg.extraCommands;
+          message = ''
+            One of the elements in `services.pcsd.extraCommands` has the `-f` flag which is not allowed.
           '';
         }
       ];
@@ -544,6 +556,7 @@ in {
               ''}
               ${concatMapAttrsToString mkResource resEnabled}
               ${concatMapAttrsToString addToGroup resEnabled}
+              ${extraCommands}
 
                   # Apply diff between old and new config to current CIB
                   crm_diff --no-version -o /tmp/pcsd/cib-old.xml -n ${tmpCib} |
