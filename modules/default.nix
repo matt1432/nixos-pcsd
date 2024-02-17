@@ -34,9 +34,13 @@ nixpkgs-pacemaker: self: {
 
   startDesc = after:
     mdDoc ''
-      Determines what resources need to be started ${if after then "after" else "before"}
-      this one.  
-      Requires a group.  
+      Determines what resources need to be started ${
+        if after
+        then "after"
+        else "before"
+      }
+      this one.\
+      Requires a group.\
       Can only be the name of resources in the same group and cannot
       be the name of this ressource.
     '';
@@ -51,7 +55,7 @@ in {
     corosyncKeyFile = mkOption {
       type = with types; nullOr path;
       description = mdDoc ''
-        Required path to a file containing the key for corosync.  
+        Required path to a file containing the key for corosync.\
         See `corosync-keygen(8)`.
       '';
     };
@@ -69,7 +73,7 @@ in {
       type = types.int;
       default = 0;
       description = mdDoc ''
-        The index of the node in charge of updating the cluster settings.  
+        The index of the node in charge of updating the cluster settings.\
         This is equivalent to its position in `services.pcsd.nodes`.
       '';
     };
@@ -118,7 +122,7 @@ in {
       default = self.packages.x86_64-linux.default;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.default";
       description = ''
-        The pcs package to use.  
+        The pcs package to use.\
         By default, this option will use the `packages.default` as exposed by this flake.
       '';
     };
@@ -168,15 +172,16 @@ in {
               type = types.str;
               default = name;
               description = mdDoc ''
-                The name of the systemd unit file without '.service'.  
+                The name of the systemd unit file without '.service'.\
                 By default, this option will use the name of this attribute.
               '';
             };
 
             group = mkOption {
               type = with types; nullOr str;
+              default = null;
               description = mdDoc ''
-                The name of the group in which we want to place this resource.  
+                The name of the group in which we want to place this resource.\
                 This allows multiple resources to always be on the same node and
                 can also make the order in which the resources start configurable.
               '';
@@ -228,7 +233,7 @@ in {
               type = types.str;
               default = name;
               description = mdDoc ''
-                The name of the resource as pacemaker sees it.  
+                The name of the resource as pacemaker sees it.\
                 By default, this option will use the name of this attribute.
               '';
             };
@@ -254,8 +259,9 @@ in {
 
             group = mkOption {
               type = with types; nullOr str;
+              default = null;
               description = mdDoc ''
-                The name of the group in which we want to place this resource.  
+                The name of the group in which we want to place this resource.\
                 This allows multiple resources to always be on the same node and
                 can also make the order in which the resources start configurable.
               '';
@@ -334,26 +340,28 @@ in {
       if (hasAttr "id" resource)
       then {
         name = resource.id;
+        inherit (resource) group;
         type = "virtualIps";
         createCmd = mkVirtIp resource;
         groupCmd = mkGroupCmd resource resource.id;
       }
       else {
         name = resource.systemdName;
+        inherit (resource) group;
         type = "systemdResources";
         createCmd = mkSystemdResource resource;
         groupCmd = mkGroupCmd resource resource.systemdName;
       };
 
     resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
+    groupedRes = filterAttrs (n: v: v.group != null) resEnabled;
     resourcesWithPositions =
       mapAttrsToList (n: v: {
-        inherit (resourceTypeInfo v) name type;
+        inherit (resourceTypeInfo v) name type group;
         constraints = v.startAfter ++ v.startBefore;
       })
-      resEnabled;
+      groupedRes;
 
-    # TODO: make sure the elements reference resources in the same group
     errRes =
       # Find the first resource that has errors
       findFirst (
@@ -363,9 +371,11 @@ in {
             all (
               constraint:
               # A constraint needs to have a corresponding resource name
-                (any (resName: constraint == resName) resNames)
-                # And can't be its own resource name
+                any (resName: constraint == resName) resNames
+                # can't be its own resource name
                 && constraint != resource.name
+                # has to be in the same group
+                && (findFirst (r: r.name == constraint) {group = "";} resourcesWithPositions).group == resource.group
             )
             resource.constraints
           )
@@ -400,7 +410,8 @@ in {
           assertion = errRes == null;
           message = ''
             The parameters in services.pcsd.${errRes.type}.${errRes.name}.<startAfter|startBefore>
-            need to correspond to the name of a virtualIP or a systemd resource and cannot be "${errRes.name}".
+            need to correspond to the name of a virtualIP or a systemd resource that is a member
+            of the same group and cannot be "${errRes.name}".
           '';
         }
       ];
