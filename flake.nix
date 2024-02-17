@@ -1,4 +1,11 @@
 {
+  nixConfig = {
+    extra-substituters = ["https://pcsd.cachix.org"];
+    extra-trusted-public-keys = [
+      "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
+    ];
+  };
+
   inputs = {
     nixpkgs = {
       type = "github";
