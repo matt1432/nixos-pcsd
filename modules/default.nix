@@ -41,6 +41,14 @@ in {
   options.services.pcsd = {
     enable = mkEnableOption (mdDoc "pcsd");
 
+    enableBinaryCache = mkOption {
+      type = types.bool;
+      default = false;
+      description = mdDoc ''
+        Option to add the binary cache to your settings.
+      '';
+    };
+
     # Corosync options
     corosyncKeyFile = mkOption {
       type = with types; nullOr path;
@@ -433,6 +441,13 @@ in {
           '';
         }
       ];
+
+      nix.settings =
+        mkIf cfg.enableBinaryCache
+        (with self.nixConfig; {
+          substituters = extra-substituters;
+          trusted-public-keys = extra-trusted-public-keys;
+        });
 
       # Pacemaker
       services.pacemaker.enable = true;

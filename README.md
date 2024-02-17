@@ -42,6 +42,7 @@ In your server config, this would be the most barebones settings:
 
   services.pcsd = {
     enable = true;
+    enableBinaryCache = true;
 
     # I highly recommend using sops-nix or agenix for these settings
     corosyncKeyFile = builtins.toFile "keyfile" "some128charLongText";
