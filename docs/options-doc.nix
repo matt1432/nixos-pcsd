@@ -15,13 +15,8 @@
     ];
   };
 
-  # Remove '_module' and pacemaker options from the generated docs
-  options = removeAttrs (
-    removeAttrs eval.options.services ["pacemaker"]
-  ) ["_module"];
-
   allOptions = nixosOptionsDoc {
-    inherit options;
+    options = eval.options.services.pcsd;
   };
 
   generalOptions = nixosOptionsDoc {
