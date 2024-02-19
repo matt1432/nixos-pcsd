@@ -1,4 +1,4 @@
-nixpkgs-pacemaker: self: {
+nixpkgs-pacemaker: nixConfig: pcsPkg: {
   config,
   lib,
   pkgs,
@@ -117,7 +117,7 @@ in {
     # PCS options
     package = mkOption {
       type = types.package;
-      default = self.packages.x86_64-linux.default;
+      default = pcsPkg;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.default";
       description = ''
         The pcs package to use.\
@@ -442,12 +442,10 @@ in {
         }
       ];
 
-      nix.settings =
-        mkIf cfg.enableBinaryCache
-        (with self.nixConfig; {
-          substituters = extra-substituters;
-          trusted-public-keys = extra-trusted-public-keys;
-        });
+      nix.settings = mkIf cfg.enableBinaryCache {
+        substituters = nixConfig.extra-substituters;
+        trusted-public-keys = nixConfig.extra-trusted-public-keys;
+      };
 
       # Pacemaker
       services.pacemaker.enable = true;

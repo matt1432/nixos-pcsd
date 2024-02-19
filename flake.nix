@@ -68,7 +68,17 @@
     });
 
     nixosModules = {
-      pcsd = import ./modules nixpkgs-pacemaker self;
+      pcsd =
+        import ./modules
+        nixpkgs-pacemaker
+        {
+          # FIXME: passing nixConfig directly doesn't work
+          extra-substituters = ["https://pcsd.cachix.org"];
+          extra-trusted-public-keys = [
+            "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
+          ];
+        }
+        self.packages.x86_64-linux.default;
       default = self.nixosModules.pcsd;
     };
 
@@ -96,19 +106,21 @@
         ];
       in
         mkShell {
-          packages = [
-            (writeShellApplication {
-              name = "localDeploy";
-              runtimeInputs = inputs;
-              text = "(nix build .#docs && cd result && mkdocs serve)";
-            })
+          packages =
+            [
+              (writeShellApplication {
+                name = "localDeploy";
+                runtimeInputs = inputs;
+                text = "(nix build .#docs && cd result && mkdocs serve)";
+              })
 
-            (writeShellApplication {
-              name = "ghDeploy";
-              runtimeInputs = inputs;
-              text = lib.fileContents ./docs/deploy.sh;
-            })
-          ] ++ inputs;
+              (writeShellApplication {
+                name = "ghDeploy";
+                runtimeInputs = inputs;
+                text = lib.fileContents ./docs/deploy.sh;
+              })
+            ]
+            ++ inputs;
         };
     });
   };
