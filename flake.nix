@@ -26,9 +26,6 @@
       type = "github";
       owner = "ClusterLabs";
       repo = "pcs";
-
-      # Get latest
-      # ref = "v0.11.7";
       flake = false;
     };
     pyagentx-src = {
