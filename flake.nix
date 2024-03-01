@@ -108,7 +108,7 @@
               (writeShellApplication {
                 name = "localDeploy";
                 runtimeInputs = inputs;
-                text = "(nix build .#docs && cd result && mkdocs serve)";
+                text = "(nix build --option binary-caches \"https://cache.nixos.org\" .#docs && cd result && mkdocs serve)";
               })
 
               (writeShellApplication {
