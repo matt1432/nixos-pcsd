@@ -125,6 +125,24 @@ in {
       '';
     };
 
+    finalPackage = mkOption {
+      type = types.package;
+      readOnly = true;
+      default = cfg.package.override {
+        pcs-web-ui = cfg.webUIPackage;
+        withWebUI = cfg.enableWebUI;
+      };
+      defaultText = literalExpression ''
+        pcsd.packages.x86_64-linux.default.override {
+          pcs-web-ui = pcsd.packages.x86_64-linux.pcs-web-ui;
+          withWebUI = false;
+        }
+      '';
+      description = mdDoc ''
+        The package defined by `services.pcsd.package` with overrides applied.
+      '';
+    };
+
     enableWebUI = mkOption {
       type = types.bool;
       default = false;
@@ -319,11 +337,6 @@ in {
   };
 
   config = let
-    finalPackage = cfg.package.override {
-      pcs-web-ui = cfg.webUIPackage;
-      withWebUI = cfg.enableWebUI;
-    };
-
     # Important vars
     nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
     resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
@@ -494,7 +507,7 @@ in {
       '';
 
       environment.systemPackages = [
-        finalPackage
+        cfg.finalPackage
         pkgs.ocf-resource-agents
         pkgs.pacemaker
       ];
@@ -508,7 +521,7 @@ in {
       };
       users.groups.haclient = {};
 
-      systemd.packages = [finalPackage];
+      systemd.packages = [cfg.finalPackage];
       systemd.services = let
         # Abstract funcs
         concatMapAttrsToString = func: attrs:
@@ -625,13 +638,13 @@ in {
 
           "pcsd" = {
             path =
-              [finalPackage pkgs.ocf-resource-agents]
+              [cfg.finalPackage pkgs.ocf-resource-agents]
               ++ optionals cfg.enableWebUI [cfg.webUIPackage];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
           };
           "pcsd-ruby" = {
-            path = [finalPackage pkgs.ocf-resource-agents];
+            path = [cfg.finalPackage pkgs.ocf-resource-agents];
             preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
           };
         }
