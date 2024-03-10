@@ -554,7 +554,7 @@ in {
           "pcsd-setup" = {
             path = with pkgs; [
               pacemaker
-              finalPackage
+              cfg.finalPackage
               shadow
               jq
               diffutils
