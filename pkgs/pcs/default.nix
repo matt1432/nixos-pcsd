@@ -157,6 +157,6 @@ in
       ''
       + lib.optionalString withWebUI ''
         rm -r $out/lib/pcsd/public/
-        ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
+        ln -s ${pcs-web-ui}/public $out/lib/pcsd/public
       '';
   }
