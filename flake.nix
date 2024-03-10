@@ -35,6 +35,12 @@
       rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
       flake = false;
     };
+    pcs-web-ui-src = {
+      type = "github";
+      owner = "ClusterLabs";
+      repo = "pcs-web-ui";
+      flake = false;
+    };
   };
 
   outputs = {
@@ -42,6 +48,7 @@
     nixpkgs,
     nixpkgs-pacemaker,
     pcs-src,
+    pcs-web-ui-src,
     pyagentx-src,
     ...
   }: let
@@ -57,10 +64,16 @@
   in {
     packages = perSystem (system: pkgs: {
       docs = pkgs.callPackage ./docs {inherit pkgs self;};
-      pcs = pkgs.callPackage ./pkgs {
+
+      pcs = pkgs.callPackage ./pkgs/pcs {
         inherit pkgs pcs-src pyagentx-src;
         pacemakerPkgs = nixpkgs-pacemaker.legacyPackages.${system};
       };
+
+      pcs-web-ui = pkgs.callPackage ./pkgs/pcs-web-ui {
+        inherit pkgs pcs-web-ui-src;
+      };
+
       default = self.packages.${system}.pcs;
     });
 
@@ -75,7 +88,8 @@
             "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
           ];
         }
-        self.packages.x86_64-linux.default;
+        self.packages.x86_64-linux.default
+        self.packages.x86_64-linux.pcs-web-ui;
       default = self.nixosModules.pcsd;
     };
 
@@ -86,7 +100,6 @@
         packages = with pkgs; [
           alejandra
           git
-          nix
           bundler
           bundix
         ];

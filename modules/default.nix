@@ -1,4 +1,4 @@
-nixpkgs-pacemaker: nixConfig: pcsPkg: {
+nixpkgs-pacemaker: nixConfig: pcsPkg: webPkg: {
   config,
   lib,
   pkgs,
@@ -6,7 +6,7 @@ nixpkgs-pacemaker: nixConfig: pcsPkg: {
 }: let
   inherit (lib) types literalExpression;
   inherit (lib.attrsets) attrNames attrValues listToAttrs filterAttrs hasAttr mapAttrsToList;
-  inherit (lib.lists) all any elemAt findFirst length;
+  inherit (lib.lists) all any elemAt findFirst length optionals;
   inherit (lib.modules) mkForce mkIf;
   inherit (lib.options) mdDoc mkEnableOption mkOption;
   inherit
@@ -122,6 +122,24 @@ in {
       description = ''
         The pcs package to use.\
         By default, this option will use the `packages.default` as exposed by this flake.
+      '';
+    };
+
+    enableWebUI = mkOption {
+      type = types.bool;
+      default = false;
+      description = mdDoc ''
+        Enable the webUI of pcsd.
+      '';
+    };
+
+    webUIPackage = mkOption {
+      type = types.package;
+      default = webPkg;
+      defaultText = literalExpression "pcsd.packages.x86_64-linux.pcs-web-ui";
+      description = ''
+        The pcs webUI package to use.\
+        By default, this option will use the `packages.pcs-web-ui` as exposed by this flake.
       '';
     };
 
@@ -301,6 +319,11 @@ in {
   };
 
   config = let
+    finalPackage = cfg.package.override {
+      pcs-web-ui = cfg.webUIPackage;
+      withWebUI = cfg.enableWebUI;
+    };
+
     # Important vars
     nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
     resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
@@ -471,7 +494,7 @@ in {
       '';
 
       environment.systemPackages = [
-        cfg.package
+        finalPackage
         pkgs.ocf-resource-agents
         pkgs.pacemaker
       ];
@@ -485,7 +508,7 @@ in {
       };
       users.groups.haclient = {};
 
-      systemd.packages = [cfg.package];
+      systemd.packages = [finalPackage];
       systemd.services = let
         # Abstract funcs
         concatMapAttrsToString = func: attrs:
@@ -518,7 +541,7 @@ in {
           "pcsd-setup" = {
             path = with pkgs; [
               pacemaker
-              cfg.package
+              finalPackage
               shadow
               jq
               diffutils
@@ -601,12 +624,14 @@ in {
           };
 
           "pcsd" = {
-            path = [cfg.package pkgs.ocf-resource-agents];
+            path =
+              [finalPackage pkgs.ocf-resource-agents]
+              ++ optionals cfg.enableWebUI [cfg.webUIPackage];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
           };
           "pcsd-ruby" = {
-            path = [cfg.package pkgs.ocf-resource-agents];
+            path = [finalPackage pkgs.ocf-resource-agents];
             preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
           };
         }

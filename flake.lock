@@ -48,6 +48,22 @@
         "type": "github"
       }
     },
+    "pcs-web-ui-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1706898094,
+        "narHash": "sha256-MkSYjztQ7AquDCTaCEDNZRLxbqZqHHGjKG0k57j+kr4=",
+        "owner": "ClusterLabs",
+        "repo": "pcs-web-ui",
+        "rev": "726fa9ec0c70e9c3885be4631e1dbc2de9ddec05",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ClusterLabs",
+        "repo": "pcs-web-ui",
+        "type": "github"
+      }
+    },
     "pyagentx-src": {
       "flake": false,
       "locked": {
@@ -70,6 +86,7 @@
         "nixpkgs": "nixpkgs",
         "nixpkgs-pacemaker": "nixpkgs-pacemaker",
         "pcs-src": "pcs-src",
+        "pcs-web-ui-src": "pcs-web-ui-src",
         "pyagentx-src": "pyagentx-src"
       }
     }

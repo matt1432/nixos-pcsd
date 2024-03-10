@@ -17,6 +17,8 @@
   python3Packages,
   ruby,
   systemd,
+  withWebUI ? false,
+  pcs-web-ui ? null,
   ...
 }: let
   inherit (pacemakerPkgs) pacemaker corosync;
@@ -147,8 +149,14 @@ in
         wheel
       ]);
 
-    installPhase = ''
-      make
-      make install
-    '';
+    installPhase =
+      ''
+        make
+        make install
+
+      ''
+      + lib.optionalString withWebUI ''
+        rm -r $out/lib/pcsd/public/
+        ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
+      '';
   }
