@@ -1,27 +1,23 @@
 {
-  fetchNpmDeps,
-  nodejs_18,
   pcs-web-ui-src,
-  stdenv,
+  buildNpmPackage,
   ...
 }:
-stdenv.mkDerivation rec {
+buildNpmPackage {
   pname = "pcs-web-ui";
   version = pcs-web-ui-src.rev;
 
   src = pcs-web-ui-src;
+  sourceRoot = "source/packages/app";
 
-  buildInputs = [nodejs_18];
-
-  npmDeps = fetchNpmDeps {
-    src = "${src}/packages/app";
-    hash = "sha256-3Cw+bORqgROJWUZHAHfEE4EYHQINi1hdCMHhNiKPJTw=";
-  };
+  npmDepsHash = "sha256-3Cw+bORqgROJWUZHAHfEE4EYHQINi1hdCMHhNiKPJTw=";
 
   buildPhase = ''
-    cp -a ${npmDeps} /build/source/packages/app/node_modules
+    ./.bin/build.sh ./.
+  '';
 
-    export PCSD_DIR=$out
-    BUILD_USE_CURRENT_NODE_MODULES=true make build
+  installPhase = ''
+    mkdir -p $out/lib/pcsd/public
+    cp -r ./build $out/lib/pcsd/public/ui/
   '';
 }

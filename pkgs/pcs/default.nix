@@ -21,6 +21,7 @@
   pcs-web-ui ? null,
   ...
 }: let
+  inherit (lib) getBin getLib optionalString;
   inherit (pacemakerPkgs) pacemaker corosync;
 
   pyagentx = python3Packages.buildPythonPackage {
@@ -53,15 +54,15 @@ in
       # Fix pam path https://github.com/NixOS/nixpkgs/blob/5a072b4a9d7ccf64df63645f3ee808dc115210ba/pkgs/development/python-modules/pamela/default.nix#L20
       substituteInPlace $sourceRoot/pcs/lib/auth/pam.py --replace \
         'find_library("pam")' \
-        '"${lib.getLib pam}/lib/libpam.so"'
+        '"${getLib pam}/lib/libpam.so"'
 
 
       # Fix hardcoded paths to binaries
       substituteInPlace $sourceRoot/pcsd/bootstrap.rb --replace \
-        "/bin/hostname" "${lib.getBin hostname}/bin/hostname"
+        "/bin/hostname" "${getBin hostname}/bin/hostname"
 
       substituteInPlace $sourceRoot/pcsd/pcs.rb --replace \
-        "/bin/cat" "${lib.getBin coreutils}/bin/cat"
+        "/bin/cat" "${getBin coreutils}/bin/cat"
 
 
       # Fix systemd path
@@ -155,7 +156,7 @@ in
         make install
 
       ''
-      + lib.optionalString withWebUI ''
+      + optionalString withWebUI ''
         rm -r $out/lib/pcsd/public/
         ln -s ${pcs-web-ui}/public $out/lib/pcsd/public
       '';

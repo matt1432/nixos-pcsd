@@ -6,7 +6,7 @@ nixpkgs-pacemaker: nixConfig: pcsPkg: webPkg: {
 }: let
   inherit (lib) types literalExpression;
   inherit (lib.attrsets) attrNames attrValues listToAttrs filterAttrs hasAttr mapAttrsToList;
-  inherit (lib.lists) all any elemAt findFirst length optionals;
+  inherit (lib.lists) all any elemAt findFirst length;
   inherit (lib.modules) mkForce mkIf;
   inherit (lib.options) mdDoc mkEnableOption mkOption;
   inherit
@@ -638,8 +638,7 @@ in {
 
           "pcsd" = {
             path =
-              [cfg.finalPackage pkgs.ocf-resource-agents]
-              ++ optionals cfg.enableWebUI [cfg.webUIPackage];
+              [cfg.finalPackage pkgs.ocf-resource-agents];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
           };
