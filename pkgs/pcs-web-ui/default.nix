@@ -2,22 +2,31 @@
   pcs-web-ui-src,
   buildNpmPackage,
   ...
-}:
-buildNpmPackage {
-  pname = "pcs-web-ui";
-  version = pcs-web-ui-src.rev;
+}: let
+  inherit (builtins) fromJSON readFile;
 
-  src = pcs-web-ui-src;
-  sourceRoot = "source/packages/app";
+  packageJSON = "${pcs-web-ui-src}/packages/app/package.json";
+  tag = (fromJSON (readFile packageJSON)).version;
+  version =
+    if tag == pcs-web-ui-src.shortRev
+    then tag
+    else "${tag}+${pcs-web-ui-src.shortRev}";
+in
+  buildNpmPackage {
+    pname = "pcs-web-ui";
+    inherit version;
 
-  npmDepsHash = "sha256-3Cw+bORqgROJWUZHAHfEE4EYHQINi1hdCMHhNiKPJTw=";
+    src = pcs-web-ui-src;
+    sourceRoot = "source/packages/app";
 
-  buildPhase = ''
-    ./.bin/build.sh ./.
-  '';
+    npmDepsHash = "sha256-3Cw+bORqgROJWUZHAHfEE4EYHQINi1hdCMHhNiKPJTw=";
 
-  installPhase = ''
-    mkdir -p $out/lib/pcsd/public
-    cp -r ./build $out/lib/pcsd/public/ui/
-  '';
-}
+    buildPhase = ''
+      ./.bin/build.sh ./.
+    '';
+
+    installPhase = ''
+      mkdir -p $out/lib/pcsd/public
+      cp -r ./build $out/lib/pcsd/public/ui/
+    '';
+  }
