@@ -34,7 +34,10 @@
       (splitString "\n" (fileContents "${pcs-src}/CHANGELOG.md"))
     ))
     0;
-  version = "${tag}+${pcs-src.shortRev}";
+  version =
+    if tag == pcs-src.shortRev
+    then tag
+    else "${tag}+${pcs-src.shortRev}";
 
   pyagentx = python3Packages.buildPythonPackage {
     pname = "pyagentx";
@@ -165,7 +168,6 @@ in
       ''
         make
         make install
-
       ''
       + optionalString withWebUI ''
         rm -r $out/lib/pcsd/public/
