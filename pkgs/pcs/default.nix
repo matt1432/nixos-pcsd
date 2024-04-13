@@ -21,16 +21,27 @@
   pcs-web-ui ? null,
   ...
 }: let
-  inherit (lib) getBin getLib optionalString;
+  inherit (builtins) match;
+  inherit (lib) elemAt findFirst getBin getLib fileContents optionalString splitString;
   inherit (pacemakerPkgs) pacemaker corosync;
+
+  regex = "^.*## [[]([.0-9]*)[]].*$";
+  tag =
+    elemAt (match regex (
+      findFirst
+      (x: (match regex x) != null)
+      ""
+      (splitString "\n" (fileContents "${pcs-src}/CHANGELOG.md"))
+    ))
+    0;
+  version = "${tag}+${pcs-src.shortRev}";
 
   pyagentx = python3Packages.buildPythonPackage {
     pname = "pyagentx";
-    version = pyagentx-src.rev;
+    version = pyagentx-src.shortRev;
     src = pyagentx-src;
   };
 
-  version = "v0.11.7.dev";
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
     inherit ruby;
