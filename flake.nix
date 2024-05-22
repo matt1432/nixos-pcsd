@@ -109,6 +109,18 @@
           git
           bundler
           bundix
+
+          (writeShellApplication {
+            name = "updateGems";
+            runtimeInputs = [bundler bundix];
+
+            text = ''
+              cd ./pkgs/pcs || exit
+              rm Gemfile.lock gemset.nix
+              bundler
+              bundix
+            '';
+          })
         ];
       };
 

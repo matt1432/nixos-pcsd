@@ -22,10 +22,6 @@ pcsd = {
 
   # Here is the classic one
   # url = "github:matt1432/nixos-pcsd";
-
-  # You can uncomment this line, but I've had a lot of issues (they're fixed now)
-  # with latest unstable, so I recommend not changing this flake's nixpkgs
-  # inputs.nixpkgs.follows = "nixpkgs";
 };
 ...
 ```
