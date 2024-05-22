@@ -67,10 +67,15 @@
 
       pcs = pkgs.callPackage ./pkgs/pcs {
         inherit pkgs pcs-src pyagentx-src;
+        inherit (self.packages.${pkgs.system}) pacemaker;
       };
 
       pcs-web-ui = pkgs.callPackage ./pkgs/pcs-web-ui {
         inherit pkgs pcs-web-ui-src;
+      };
+
+      pacemaker = pkgs.pacemaker.override {
+        inherit (self.packages.${pkgs.system}) ocf-resource-agents;
       };
 
       ocf-resource-agents = pkgs.callPackage ./pkgs/ocf-resource-agents {

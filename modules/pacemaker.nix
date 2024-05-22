@@ -13,7 +13,7 @@ in {
   options.services.pacemaker = {
     enable = mkEnableOption "pacemaker";
 
-    package = mkPackageOption pkgs "pacemaker" {};
+    package = mkPackageOption self.packages.${pkgs.system} "pacemaker" {};
   };
 
   # implementation

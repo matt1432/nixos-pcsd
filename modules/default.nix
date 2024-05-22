@@ -25,6 +25,7 @@ self: nixConfig: {
   inherit
     (self.packages.${pkgs.system})
     ocf-resource-agents
+    pacemaker
     pcs-web-ui
     pcs
     ;
@@ -513,7 +514,7 @@ in {
       environment.systemPackages = [
         cfg.finalPackage
         ocf-resource-agents
-        pkgs.pacemaker
+        pacemaker
       ];
 
       # This user is created in the pacemaker service.
@@ -558,12 +559,12 @@ in {
           "pcsd-setup" = {
             path =
               (with pkgs; [
-                pacemaker
                 shadow
                 jq
                 diffutils
               ])
               ++ [
+                pacemaker
                 cfg.finalPackage
               ];
 
