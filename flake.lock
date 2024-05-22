@@ -16,19 +16,20 @@
         "type": "github"
       }
     },
-    "nixpkgs-pacemaker": {
+    "ocf-resource-agents-src": {
+      "flake": false,
       "locked": {
-        "lastModified": 1707746079,
-        "narHash": "sha256-oaN25Bz/8ZvqUTigsSsw/G+CQGzYe/VseMVwqi761co=",
-        "owner": "matt1432",
-        "repo": "nixpkgs",
-        "rev": "c23dfe7eababf4387a5d154a8a4a2336dd33e406",
+        "lastModified": 1713949900,
+        "narHash": "sha256-ru/NbvpwrHOYhAM9RmP7K9kCkUszc1TdV71OuGo1xu8=",
+        "owner": "ClusterLabs",
+        "repo": "resource-agents",
+        "rev": "72b4771db9437c36931c0f673210f6fe6ed4f8ed",
         "type": "github"
       },
       "original": {
-        "owner": "matt1432",
-        "ref": "ocf-fix",
-        "repo": "nixpkgs",
+        "owner": "ClusterLabs",
+        "ref": "v4.14.0",
+        "repo": "resource-agents",
         "type": "github"
       }
     },
@@ -84,7 +85,7 @@
     "root": {
       "inputs": {
         "nixpkgs": "nixpkgs",
-        "nixpkgs-pacemaker": "nixpkgs-pacemaker",
+        "ocf-resource-agents-src": "ocf-resource-agents-src",
         "pcs-src": "pcs-src",
         "pcs-web-ui-src": "pcs-web-ui-src",
         "pyagentx-src": "pyagentx-src"

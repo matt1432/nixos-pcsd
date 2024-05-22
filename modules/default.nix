@@ -1,4 +1,4 @@
-nixpkgs-pacemaker: nixConfig: pcsPkg: webPkg: {
+self: nixConfig: {
   config,
   lib,
   pkgs,
@@ -22,6 +22,13 @@ nixpkgs-pacemaker: nixConfig: pcsPkg: webPkg: {
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
 
+  inherit
+    (self.packages.${pkgs.system})
+    ocf-resource-agents
+    pcs-web-ui
+    pcs
+    ;
+
   startDesc = after:
     mdDoc ''
       Determines what resources need to be started ${
@@ -36,7 +43,7 @@ nixpkgs-pacemaker: nixConfig: pcsPkg: webPkg: {
     '';
 in {
   disabledModules = [pacemakerPath];
-  imports = ["${nixpkgs-pacemaker}/nixos/modules/${pacemakerPath}"];
+  imports = [self.nixosModules.pacemaker];
 
   options.services.pcsd = {
     enable = mkEnableOption (mdDoc "pcsd");
@@ -95,29 +102,28 @@ in {
           # the other nodes of your cluster go here
         ]
       '';
-      type = with types;
-        listOf (submodule {
-          options = {
-            nodeid = mkOption {
-              type = int;
-              description = mdDoc "Node ID number.";
-            };
-            name = mkOption {
-              type = str;
-              description = mdDoc "Node name.";
-            };
-            ring_addrs = mkOption {
-              type = listOf str;
-              description = mdDoc "List of IP addresses, one for each ring.";
-            };
+      type = types.listOf (types.submodule {
+        options = {
+          nodeid = mkOption {
+            type = types.int;
+            description = mdDoc "Node ID number.";
           };
-        });
+          name = mkOption {
+            type = types.str;
+            description = mdDoc "Node name.";
+          };
+          ring_addrs = mkOption {
+            type = types.listOf types.str;
+            description = mdDoc "List of IP addresses, one for each ring.";
+          };
+        };
+      });
     };
 
     # PCS options
     package = mkOption {
       type = types.package;
-      default = pcsPkg;
+      default = pcs;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.default";
       description = ''
         The pcs package to use.\
@@ -153,7 +159,7 @@ in {
 
     webUIPackage = mkOption {
       type = types.package;
-      default = webPkg;
+      default = pcs-web-ui;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.pcs-web-ui";
       description = ''
         The pcs webUI package to use.\
@@ -188,58 +194,57 @@ in {
           };
         }
       '';
-      type = with types;
-        attrsOf (submodule ({name, ...}: {
-          options = {
-            enable = mkOption {
-              type = types.bool;
-              default = true;
-              description = mdDoc ''
-                Whether this service is managed by pcs or not. If not enabled,
-                this service can only be started by a user manually.
-              '';
-            };
-
-            systemdName = mkOption {
-              type = types.str;
-              default = name;
-              description = mdDoc ''
-                The name of the systemd unit file without '.service'.\
-                By default, this option will use the name of this attribute.
-              '';
-            };
-
-            group = mkOption {
-              type = with types; nullOr str;
-              default = null;
-              description = mdDoc ''
-                The name of the group in which we want to place this resource.\
-                This allows multiple resources to always be on the same node and
-                can also make the order in which the resources start configurable.
-              '';
-            };
-
-            startAfter = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = startDesc true;
-            };
-
-            startBefore = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = startDesc false;
-            };
-
-            extraArgs = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = mdDoc ''
-                Additional command line options added to pcs commands when making a systemd resource.
-              '';
-            };
+      type = types.attrsOf (types.submodule ({name, ...}: {
+        options = {
+          enable = mkOption {
+            type = types.bool;
+            default = true;
+            description = mdDoc ''
+              Whether this service is managed by pcs or not. If not enabled,
+              this service can only be started by a user manually.
+            '';
           };
-        }));
+
+          systemdName = mkOption {
+            type = types.str;
+            default = name;
+            description = mdDoc ''
+              The name of the systemd unit file without '.service'.\
+              By default, this option will use the name of this attribute.
+            '';
+          };
+
+          group = mkOption {
+            type = with types; nullOr str;
+            default = null;
+            description = mdDoc ''
+              The name of the group in which we want to place this resource.\
+              This allows multiple resources to always be on the same node and
+              can also make the order in which the resources start configurable.
+            '';
+          };
+
+          startAfter = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = startDesc true;
+          };
+
+          startBefore = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = startDesc false;
+          };
+
+          extraArgs = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = mdDoc ''
+              Additional command line options added to pcs commands when making a systemd resource.
+            '';
+          };
+        };
+      }));
     };
 
     virtualIps = mkOption {
@@ -258,66 +263,65 @@ in {
           };
         }
       '';
-      type = with types;
-        attrsOf (submodule ({name, ...}: {
-          options = {
-            id = mkOption {
-              type = types.str;
-              default = name;
-              description = mdDoc ''
-                The name of the resource as pacemaker sees it.\
-                By default, this option will use the name of this attribute.
-              '';
-            };
-
-            interface = mkOption {
-              type = types.str;
-              default = "eno1";
-              description = mdDoc "The network interface this IP will be bound to.";
-            };
-
-            ip = mkOption {
-              type = types.str;
-              description = mdDoc "The actual IP address.";
-            };
-
-            cidr = mkOption {
-              type = types.int;
-              default = 24;
-              description = mdDoc "The CIDR range of the IP.";
-            };
-
-            group = mkOption {
-              type = with types; nullOr str;
-              default = null;
-              description = mdDoc ''
-                The name of the group in which we want to place this resource.\
-                This allows multiple resources to always be on the same node and
-                can also make the order in which the resources start configurable.
-              '';
-            };
-
-            startAfter = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = startDesc true;
-            };
-
-            startBefore = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = startDesc false;
-            };
-
-            extraArgs = mkOption {
-              type = with types; listOf str;
-              default = [];
-              description = mdDoc ''
-                Additional command line options added to pcs commands when making a virtual IP.
-              '';
-            };
+      type = types.attrsOf (types.submodule ({name, ...}: {
+        options = {
+          id = mkOption {
+            type = types.str;
+            default = name;
+            description = mdDoc ''
+              The name of the resource as pacemaker sees it.\
+              By default, this option will use the name of this attribute.
+            '';
           };
-        }));
+
+          interface = mkOption {
+            type = types.str;
+            default = "eno1";
+            description = mdDoc "The network interface this IP will be bound to.";
+          };
+
+          ip = mkOption {
+            type = types.str;
+            description = mdDoc "The actual IP address.";
+          };
+
+          cidr = mkOption {
+            type = types.int;
+            default = 24;
+            description = mdDoc "The CIDR range of the IP.";
+          };
+
+          group = mkOption {
+            type = with types; nullOr str;
+            default = null;
+            description = mdDoc ''
+              The name of the group in which we want to place this resource.\
+              This allows multiple resources to always be on the same node and
+              can also make the order in which the resources start configurable.
+            '';
+          };
+
+          startAfter = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = startDesc true;
+          };
+
+          startBefore = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = startDesc false;
+          };
+
+          extraArgs = mkOption {
+            type = with types; listOf str;
+            default = [];
+            description = mdDoc ''
+              Additional command line options added to pcs commands when making a virtual IP.
+            '';
+          };
+        };
+      }));
     };
 
     extraCommands = mkOption {
@@ -508,7 +512,7 @@ in {
 
       environment.systemPackages = [
         cfg.finalPackage
-        pkgs.ocf-resource-agents
+        ocf-resource-agents
         pkgs.pacemaker
       ];
 
@@ -552,13 +556,16 @@ in {
       in
         {
           "pcsd-setup" = {
-            path = with pkgs; [
-              pacemaker
-              cfg.finalPackage
-              shadow
-              jq
-              diffutils
-            ];
+            path =
+              (with pkgs; [
+                pacemaker
+                shadow
+                jq
+                diffutils
+              ])
+              ++ [
+                cfg.finalPackage
+              ];
 
             script = ''
               # Set password on user on every node
@@ -637,13 +644,12 @@ in {
           };
 
           "pcsd" = {
-            path =
-              [cfg.finalPackage pkgs.ocf-resource-agents];
+            path = [cfg.finalPackage ocf-resource-agents];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
           };
           "pcsd-ruby" = {
-            path = [cfg.finalPackage pkgs.ocf-resource-agents];
+            path = [cfg.finalPackage ocf-resource-agents];
             preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
           };
         }
@@ -654,17 +660,5 @@ in {
             wantedBy = mkForce [];
           };
         }) (attrNames cfg.systemdResources));
-
-      # Overlays that fix some bugs
-      # FIXME: https://github.com/NixOS/nixpkgs/pull/208298
-      nixpkgs.overlays = [
-        (final: prev: {
-          inherit
-            (nixpkgs-pacemaker.legacyPackages.x86_64-linux)
-            pacemaker
-            ocf-resource-agents
-            ;
-        })
-      ];
     };
 }

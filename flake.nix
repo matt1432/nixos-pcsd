@@ -14,13 +14,6 @@
       ref = "nixos-unstable";
     };
 
-    nixpkgs-pacemaker = {
-      type = "github";
-      owner = "matt1432";
-      repo = "nixpkgs";
-      ref = "ocf-fix";
-    };
-
     # srcs
     pcs-src = {
       type = "github";
@@ -41,12 +34,19 @@
       repo = "pcs-web-ui";
       flake = false;
     };
+    ocf-resource-agents-src = {
+      type = "github";
+      owner = "ClusterLabs";
+      repo = "resource-agents";
+      ref = "v4.14.0";
+      flake = false;
+    };
   };
 
   outputs = {
     self,
     nixpkgs,
-    nixpkgs-pacemaker,
+    ocf-resource-agents-src,
     pcs-src,
     pcs-web-ui-src,
     pyagentx-src,
@@ -67,29 +67,31 @@
 
       pcs = pkgs.callPackage ./pkgs/pcs {
         inherit pkgs pcs-src pyagentx-src;
-        pacemakerPkgs = nixpkgs-pacemaker.legacyPackages.${system};
       };
 
       pcs-web-ui = pkgs.callPackage ./pkgs/pcs-web-ui {
         inherit pkgs pcs-web-ui-src;
       };
 
+      ocf-resource-agents = pkgs.callPackage ./pkgs/ocf-resource-agents {
+        inherit ocf-resource-agents-src;
+      };
+
       default = self.packages.${system}.pcs;
     });
 
     nixosModules = {
+      pacemaker = import ./modules/pacemaker.nix self;
       pcsd =
         import ./modules
-        nixpkgs-pacemaker
+        self
         {
           # FIXME: passing nixConfig directly doesn't work
           extra-substituters = ["https://pcsd.cachix.org"];
           extra-trusted-public-keys = [
             "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
           ];
-        }
-        self.packages.x86_64-linux.default
-        self.packages.x86_64-linux.pcs-web-ui;
+        };
       default = self.nixosModules.pcsd;
     };
 

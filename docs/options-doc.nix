@@ -8,10 +8,11 @@
   inherit (builtins) removeAttrs;
   inherit (lib) evalModules subtractLists;
 
-  getLine = loc: import ./get-line.nix {
-    inherit runCommand;
-    loc = subtractLists ["*" "<name>"] loc;
-  };
+  getLine = loc:
+    import ./get-line.nix {
+      inherit runCommand;
+      loc = subtractLists ["*" "<name>"] loc;
+    };
 
   eval = evalModules {
     modules = [

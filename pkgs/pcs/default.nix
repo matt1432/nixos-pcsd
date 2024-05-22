@@ -8,7 +8,8 @@
   libffi,
   libpam-wrapper,
   nss,
-  pacemakerPkgs,
+  pacemaker,
+  corosync,
   pam,
   pcs-src,
   pkg-config,
@@ -23,7 +24,6 @@
 }: let
   inherit (builtins) match;
   inherit (lib) elemAt findFirst getBin getLib fileContents optionalString splitString;
-  inherit (pacemakerPkgs) pacemaker corosync;
 
   regex = "^.*## [[]([.0-9]*)[]].*$";
   tag =
