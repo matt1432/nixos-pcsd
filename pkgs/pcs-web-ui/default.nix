@@ -19,7 +19,7 @@ in
     src = pcs-web-ui-src;
     sourceRoot = "source/packages/app";
 
-    npmDepsHash = "sha256-3Cw+bORqgROJWUZHAHfEE4EYHQINi1hdCMHhNiKPJTw=";
+    npmDepsHash = "sha256-9iRWf+rcn6G5riA0caBDv/qk3GRuU+IuoOOxVvp394E=";
 
     buildPhase = ''
       ./.bin/build.sh ./.
