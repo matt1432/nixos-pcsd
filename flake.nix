@@ -87,6 +87,7 @@
       };
 
       ocf-resource-agents = pkgs.callPackage ./pkgs/ocf-resource-agents {
+        inherit (self.packages.${pkgs.system}) pacemaker;
         inherit ocf-resource-agents-src;
       };
 
