@@ -1,4 +1,4 @@
-{
+rec {
   nixConfig = {
     extra-substituters = ["https://pcsd.cachix.org"];
     extra-trusted-public-keys = [
@@ -71,7 +71,7 @@
 
     nixosModules = {
       pacemaker = import ./modules/pacemaker.nix self;
-      pcsd = import ./modules self;
+      pcsd = import ./modules self nixConfig;
       default = self.nixosModules.pcsd;
     };
 
