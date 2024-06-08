@@ -41,68 +41,68 @@
     then tag
     else "${tag}+${pacemaker-src.shortRev}";
 in
-stdenv.mkDerivation {
-  pname = "pacemaker";
-  inherit version;
+  stdenv.mkDerivation {
+    pname = "pacemaker";
+    inherit version;
 
-  src = pacemaker-src;
+    src = pacemaker-src;
 
-  nativeBuildInputs = [
-    autoconf
-    automake
-    libtool
-    pkg-config
-  ];
+    nativeBuildInputs = [
+      autoconf
+      automake
+      libtool
+      pkg-config
+    ];
 
-  buildInputs = [
-    bash
-    bzip2
-    corosync
-    dbus.dev
-    glib
-    gnutls
-    libqb
-    libuuid
-    libxml2.dev
-    libxslt.dev
-    pam
-    python3
-  ];
+    buildInputs = [
+      bash
+      bzip2
+      corosync
+      dbus.dev
+      glib
+      gnutls
+      libqb
+      libuuid
+      libxml2.dev
+      libxslt.dev
+      pam
+      python3
+    ];
 
-  preConfigure = ''
-    ./autogen.sh --prefix="$out"
-  '';
-  configureFlags =
-    [
-      "--exec-prefix=${placeholder "out"}"
-      "--sysconfdir=/etc"
-      "--localstatedir=/var"
-      "--with-initdir=/etc/systemd/system"
-      "--with-systemdsystemunitdir=/etc/systemd/system"
-      "--with-corosync"
-      # allows Type=notify in the systemd service
-      "--enable-systemd"
-    ]
-    ++ lib.optional (!forOCF) "--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf";
+    preConfigure = ''
+      ./autogen.sh --prefix="$out"
+    '';
+    configureFlags =
+      [
+        "--exec-prefix=${placeholder "out"}"
+        "--sysconfdir=/etc"
+        "--localstatedir=/var"
+        "--with-initdir=/etc/systemd/system"
+        "--with-systemdsystemunitdir=/etc/systemd/system"
+        "--with-corosync"
+        # allows Type=notify in the systemd service
+        "--enable-systemd"
+      ]
+      ++ lib.optional (!forOCF) "--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf";
 
-  installFlags = ["DESTDIR=${placeholder "out"}"];
+    installFlags = ["DESTDIR=${placeholder "out"}"];
 
-  env.NIX_CFLAGS_COMPILE = toString (lib.optionals stdenv.cc.isGNU [
-    "-Wno-error=strict-prototypes"
-  ]);
+    env.NIX_CFLAGS_COMPILE = toString (lib.optionals stdenv.cc.isGNU [
+      "-Wno-error=strict-prototypes"
+    ]);
 
-  enableParallelBuilding = true;
+    enableParallelBuilding = true;
 
-  postInstall = ''
-    # pacemaker's install linking requires a weirdly nested hierarchy
-    mv $out$out/* $out
-    rm -r $out/nix
-  '';
+    postInstall = ''
+      # pacemaker's install linking requires a weirdly nested hierarchy
+      mv $out$out/* $out
+      rm -r $out/nix
+    '';
 
-  meta = with lib; {
-    homepage = "https://clusterlabs.org/pacemaker/";
-    description = "Pacemaker is an open source, high availability resource manager suitable for both small and large clusters.";
-    license = licenses.gpl2Plus;
-    platforms = platforms.linux;
-  };
-}
+    meta = with lib; {
+      homepage = "https://clusterlabs.org/pacemaker/";
+      description = "Pacemaker is an open source, high availability resource manager suitable for both small and large clusters.";
+      license = licenses.gpl2Plus;
+      platforms = platforms.linux;
+    };
+  }
