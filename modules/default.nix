@@ -1,4 +1,4 @@
-self: nixConfig: {
+self: {
   config,
   lib,
   pkgs,
@@ -484,8 +484,8 @@ in {
       ];
 
       nix.settings = mkIf cfg.enableBinaryCache {
-        substituters = nixConfig.extra-substituters;
-        trusted-public-keys = nixConfig.extra-trusted-public-keys;
+        substituters = self.nixConfig.extra-substituters;
+        trusted-public-keys = self.nixConfig.extra-trusted-public-keys;
       };
 
       # Pacemaker

@@ -49,63 +49,29 @@
     };
   };
 
-  outputs = {
+  outputs = inputs @ {
     self,
     nixpkgs,
-    ocf-resource-agents-src,
-    pacemaker-src,
-    pcs-src,
-    pcs-web-ui-src,
-    pyagentx-src,
     ...
   }: let
-    # As of right now, pacemaker only works on this arch
-    # according to this: https://github.com/mitchty/nix/blob/e21cab315aa53782ca6a5995a8706fc1032a0681/flake.nix#L120
-    supportedSystems = ["x86_64-linux"];
+    supportedSystems = [
+      "x86_64-linux"
+      "x86_64-darwin"
+      "aarch64-linux"
+      "aarch64-darwin"
+    ];
 
     perSystem = attrs:
-      nixpkgs.lib.genAttrs supportedSystems (system: let
-        pkgs = nixpkgs.legacyPackages.${system};
-      in
-        attrs system pkgs);
+      nixpkgs.lib.genAttrs supportedSystems (system:
+        attrs system nixpkgs.legacyPackages.${system});
   in {
-    packages = perSystem (system: pkgs: {
-      docs = pkgs.callPackage ./docs {inherit pkgs self;};
-
-      pcs = pkgs.callPackage ./pkgs/pcs {
-        inherit pkgs pcs-src pyagentx-src;
-        inherit (self.packages.${pkgs.system}) pacemaker;
-      };
-
-      pcs-web-ui = pkgs.callPackage ./pkgs/pcs-web-ui {
-        inherit pkgs pcs-web-ui-src;
-      };
-
-      pacemaker = pkgs.callPackage ./pkgs/pacemaker {
-        inherit (self.packages.${pkgs.system}) ocf-resource-agents;
-        inherit pacemaker-src;
-      };
-
-      ocf-resource-agents = pkgs.callPackage ./pkgs/ocf-resource-agents {
-        inherit (self.packages.${pkgs.system}) pacemaker;
-        inherit ocf-resource-agents-src;
-      };
-
-      default = self.packages.${system}.pcs;
-    });
+    packages =
+      perSystem (system: pkgs:
+        import ./pkgs ({inherit self system pkgs;} // inputs));
 
     nixosModules = {
       pacemaker = import ./modules/pacemaker.nix self;
-      pcsd =
-        import ./modules
-        self
-        {
-          # FIXME: passing nixConfig directly doesn't work
-          extra-substituters = ["https://pcsd.cachix.org"];
-          extra-trusted-public-keys = [
-            "pcsd.cachix.org-1:PS4IaaAiEdfaffVlQf/veW+H5T1RAncqNhxJzW9v9Lc="
-          ];
-        };
+      pcsd = import ./modules self;
       default = self.nixosModules.pcsd;
     };
 
