@@ -2,8 +2,6 @@
   autoconf,
   automake,
   bundlerEnv,
-  coreutils,
-  hostname,
   lib,
   libffi,
   libpam-wrapper,
@@ -23,7 +21,7 @@
   ...
 }: let
   inherit (builtins) match;
-  inherit (lib) elemAt findFirst getBin getLib fileContents optionalString splitString;
+  inherit (lib) elemAt findFirst getLib fileContents optionalString splitString;
 
   regex = "^.*## [[]([.0-9]*)[]].*$";
   tag =
@@ -66,43 +64,35 @@ in
 
 
       # Fix pam path https://github.com/NixOS/nixpkgs/blob/5a072b4a9d7ccf64df63645f3ee808dc115210ba/pkgs/development/python-modules/pamela/default.nix#L20
-      substituteInPlace $sourceRoot/pcs/lib/auth/pam.py --replace \
+      substituteInPlace $sourceRoot/pcs/lib/auth/pam.py --replace-fail \
         'find_library("pam")' \
         '"${getLib pam}/lib/libpam.so"'
 
 
-      # Fix hardcoded paths to binaries
-      substituteInPlace $sourceRoot/pcsd/bootstrap.rb --replace \
-        "/bin/hostname" "${getBin hostname}/bin/hostname"
-
-      substituteInPlace $sourceRoot/pcsd/pcs.rb --replace \
-        "/bin/cat" "${getBin coreutils}/bin/cat"
-
-
       # Fix systemd path
       substituteInPlace $sourceRoot/configure.ac \
-        --replace 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
+        --replace-fail 'AC_SUBST([SYSTEMD_UNIT_DIR])' "SYSTEMD_UNIT_DIR=$out/lib/systemd/system
         AC_SUBST([SYSTEMD_UNIT_DIR])"
 
 
       # Fix paths to corosync and pacemaker executables
       substituteInPlace $sourceRoot/configure.ac \
-        --replace 'PCS_PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix], [/usr])' "COROEXECPREFIX=${corosync}
+        --replace-fail 'PCS_PKG_CHECK_VAR([COROEXECPREFIX], [corosync], [exec_prefix], [/usr])' "COROEXECPREFIX=${corosync}
         AC_SUBST([COROEXECPREFIX])"
 
       substituteInPlace $sourceRoot/configure.ac \
-        --replace 'PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])' "PCMKEXECPREFIX=${pacemaker}
+        --replace-fail 'PCS_PKG_CHECK_VAR([PCMKEXECPREFIX], [pacemaker], [exec_prefix], [/usr])' "PCMKEXECPREFIX=${pacemaker}
         AC_SUBST([PCMKEXECPREFIX])"
 
       substituteInPlace $sourceRoot/configure.ac \
-        --replace "\$prefix/libexec/pacemaker" "${pacemaker}/libexec/pacemaker"
+        --replace-fail "\$prefix/libexec/pacemaker" "${pacemaker}/libexec/pacemaker"
 
 
       # Don't create var files
-      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
+      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace-fail \
         '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/log/pcsd' ""
 
-      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace \
+      substituteInPlace $sourceRoot/pcsd/Makefile.am --replace-fail \
        '$(MKDIR_P) -m 0700 $(DESTDIR)$(localstatedir)/lib/pcsd' ""
     '';
 
