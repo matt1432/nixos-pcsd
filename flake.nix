@@ -15,6 +15,12 @@
     };
 
     # srcs
+    pacemaker-src = {
+      type = "github";
+      owner = "ClusterLabs";
+      repo = "pacemaker";
+      flake = false;
+    };
     pcs-src = {
       type = "github";
       owner = "ClusterLabs";
@@ -47,6 +53,7 @@
     self,
     nixpkgs,
     ocf-resource-agents-src,
+    pacemaker-src,
     pcs-src,
     pcs-web-ui-src,
     pyagentx-src,
@@ -74,8 +81,9 @@
         inherit pkgs pcs-web-ui-src;
       };
 
-      pacemaker = pkgs.pacemaker.override {
+      pacemaker = pkgs.callPackage ./pkgs/pacemaker {
         inherit (self.packages.${pkgs.system}) ocf-resource-agents;
+        inherit pacemaker-src;
       };
 
       ocf-resource-agents = pkgs.callPackage ./pkgs/ocf-resource-agents {

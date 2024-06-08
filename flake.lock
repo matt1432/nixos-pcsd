@@ -32,6 +32,22 @@
         "type": "github"
       }
     },
+    "pacemaker-src": {
+      "flake": false,
+      "locked": {
+        "lastModified": 1717708336,
+        "narHash": "sha256-676cf9eZjmjQTamvkgT0Sp3+Gkb0N1gG86HBRnEcqfE=",
+        "owner": "ClusterLabs",
+        "repo": "pacemaker",
+        "rev": "a0d3c5fedd45b0c41bf60594545584b6aec9487f",
+        "type": "github"
+      },
+      "original": {
+        "owner": "ClusterLabs",
+        "repo": "pacemaker",
+        "type": "github"
+      }
+    },
     "pcs-src": {
       "flake": false,
       "locked": {
@@ -85,6 +101,7 @@
       "inputs": {
         "nixpkgs": "nixpkgs",
         "ocf-resource-agents-src": "ocf-resource-agents-src",
+        "pacemaker-src": "pacemaker-src",
         "pcs-src": "pcs-src",
         "pcs-web-ui-src": "pcs-web-ui-src",
         "pyagentx-src": "pyagentx-src"

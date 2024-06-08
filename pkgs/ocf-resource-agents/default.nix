@@ -21,13 +21,17 @@
   inherit (lib) elemAt findFirst fileContents splitString;
 
   regex = "^- stable release (.*)$";
-  version =
+  tag =
     elemAt (match regex (
       findFirst (x: (match regex x) != null)
       ""
       (splitString "\n" (fileContents "${ocf-resource-agents-src}/ChangeLog"))
     ))
     0;
+  version =
+    if tag == ocf-resource-agents-src.shortRev
+    then tag
+    else "${tag}+${ocf-resource-agents-src.shortRev}";
 
   drbdForOCF = drbd.override {
     forOCF = true;
