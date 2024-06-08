@@ -7,6 +7,7 @@
   pcs-src,
   pcs-web-ui-src,
   pyagentx-src,
+  ...
 }: {
   docs = pkgs.callPackage ../docs {inherit pkgs self;};
 
