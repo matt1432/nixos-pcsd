@@ -17,6 +17,18 @@
   pacemaker,
   libqb,
 }: let
+  inherit (builtins) match;
+  inherit (lib) elemAt findFirst fileContents splitString;
+
+  regex = "^- stable release (.*)$";
+  version =
+    elemAt (match regex (
+      findFirst (x: (match regex x) != null)
+      ""
+      (splitString "\n" (fileContents "${ocf-resource-agents-src}/ChangeLog"))
+    ))
+    0;
+
   drbdForOCF = drbd.override {
     forOCF = true;
   };
@@ -28,14 +40,7 @@
     pname = "resource-agents";
 
     src = ocf-resource-agents-src;
-    version =
-      lib.removePrefix
-      "v"
-      ((builtins.fromJSON (builtins.readFile ../../flake.lock))
-        .nodes
-        .ocf-resource-agents-src
-        .original
-        .ref);
+    inherit version;
 
     patches = [./improve-command-detection.patch];
 
