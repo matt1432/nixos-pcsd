@@ -21,13 +21,6 @@
       repo = "pcs";
       flake = false;
     };
-    pyagentx-src = {
-      type = "github";
-      owner = "ondrejmular";
-      repo = "pyagentx";
-      rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
-      flake = false;
-    };
     pcs-web-ui-src = {
       type = "github";
       owner = "ClusterLabs";
@@ -38,7 +31,14 @@
       type = "github";
       owner = "ClusterLabs";
       repo = "resource-agents";
-      ref = "v4.14.0";
+      flake = false;
+    };
+
+    pyagentx-src = {
+      type = "github";
+      owner = "ondrejmular";
+      repo = "pyagentx";
+      rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
       flake = false;
     };
   };
