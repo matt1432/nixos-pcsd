@@ -162,10 +162,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0d8ivcirrrxpkpjc1c835wknc9s2fl54xpw08s177yfrh5ish209";
+      sha256 = "07pxb0ixiadjnbrkgjmb5z73xdyss8mq5hwzs8mgilc756lyb3x5";
       type = "gem";
     };
-    version = "3.2.8";
+    version = "3.2.9";
   };
   ruby2_keywords = {
     groups = ["default"];
