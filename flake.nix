@@ -78,7 +78,7 @@ rec {
     formatter = perSystem (_: pkgs: pkgs.alejandra);
 
     devShells = perSystem (_: pkgs: {
-      default = pkgs.mkShell {
+      update = pkgs.mkShell {
         packages = with pkgs; [
           alejandra
           git
