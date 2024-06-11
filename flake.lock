@@ -35,11 +35,11 @@
     "pacemaker-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1717708336,
-        "narHash": "sha256-676cf9eZjmjQTamvkgT0Sp3+Gkb0N1gG86HBRnEcqfE=",
+        "lastModified": 1718063202,
+        "narHash": "sha256-A2F1BKeZaQqwgzIBJms5duTu0s5MFlXz/HulW/PSRjc=",
         "owner": "ClusterLabs",
         "repo": "pacemaker",
-        "rev": "a0d3c5fedd45b0c41bf60594545584b6aec9487f",
+        "rev": "42b7c0d0155b7cb274f70f785fcfaa599d643832",
         "type": "github"
       },
       "original": {
