@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1717786204,
-        "narHash": "sha256-4q0s6m0GUcN7q+Y2DqD27iLvbcd1G50T2lv08kKxkSI=",
+        "lastModified": 1717974879,
+        "narHash": "sha256-GTO3C88+5DX171F/gVS3Qga/hOs/eRMxPFpiHq2t+D8=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "051f920625ab5aabe37c920346e3e69d7d34400e",
+        "rev": "c7b821ba2e1e635ba5a76d299af62821cbcb09f3",
         "type": "github"
       },
       "original": {
@@ -19,11 +19,11 @@
     "ocf-resource-agents-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1717761494,
-        "narHash": "sha256-fWfkEN515hxgdxA/RLl8zl01nLnW1wVAnEVOA7+/1AM=",
+        "lastModified": 1718091260,
+        "narHash": "sha256-ORcZHBXkZtK8bLyZ+Op9l9nCHvOoBcICt/ES8BB60o4=",
         "owner": "ClusterLabs",
         "repo": "resource-agents",
-        "rev": "5a120c19ca73821ad03d6e2737c445819796dd90",
+        "rev": "00552be3df6d997eef44b0f3e6554b822cdc3d27",
         "type": "github"
       },
       "original": {
@@ -35,11 +35,11 @@
     "pacemaker-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718063202,
-        "narHash": "sha256-A2F1BKeZaQqwgzIBJms5duTu0s5MFlXz/HulW/PSRjc=",
+        "lastModified": 1718152248,
+        "narHash": "sha256-T8OXYiSYuHPw285OqM1WmylVOuopq9ZDLbOzhfAOhk8=",
         "owner": "ClusterLabs",
         "repo": "pacemaker",
-        "rev": "42b7c0d0155b7cb274f70f785fcfaa599d643832",
+        "rev": "318f22909c0e5a29d3a7ec782b45484833f1cf4b",
         "type": "github"
       },
       "original": {
