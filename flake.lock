@@ -19,11 +19,11 @@
     "ocf-resource-agents-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718091260,
-        "narHash": "sha256-ORcZHBXkZtK8bLyZ+Op9l9nCHvOoBcICt/ES8BB60o4=",
+        "lastModified": 1718607826,
+        "narHash": "sha256-D00VxU8Sz/iYv9gMOy5Yp2pgS6hOqeHGTbSg1oO/asc=",
         "owner": "ClusterLabs",
         "repo": "resource-agents",
-        "rev": "00552be3df6d997eef44b0f3e6554b822cdc3d27",
+        "rev": "7e9e38f9ef9b61f9af7f509dadf7da9635826021",
         "type": "github"
       },
       "original": {
