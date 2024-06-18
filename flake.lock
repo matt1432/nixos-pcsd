@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1718318537,
-        "narHash": "sha256-4Zu0RYRcAY/VWuu6awwq4opuiD//ahpc2aFHg2CWqFY=",
+        "lastModified": 1718530797,
+        "narHash": "sha256-pup6cYwtgvzDpvpSCFh1TEUjw2zkNpk8iolbKnyFmmU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "e9ee548d90ff586a6471b4ae80ae9cfcbceb3420",
+        "rev": "b60ebf54c15553b393d144357375ea956f89e9a9",
         "type": "github"
       },
       "original": {
@@ -19,11 +19,11 @@
     "ocf-resource-agents-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718607826,
-        "narHash": "sha256-D00VxU8Sz/iYv9gMOy5Yp2pgS6hOqeHGTbSg1oO/asc=",
+        "lastModified": 1718608015,
+        "narHash": "sha256-3cArbVCRGBZ8BiFwVigVL3FiEiIaYC19Bp8WZbNRAps=",
         "owner": "ClusterLabs",
         "repo": "resource-agents",
-        "rev": "7e9e38f9ef9b61f9af7f509dadf7da9635826021",
+        "rev": "6c47ae337095c4cd46757f75afa89f9385eeb7c8",
         "type": "github"
       },
       "original": {
@@ -35,11 +35,11 @@
     "pacemaker-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718340520,
-        "narHash": "sha256-VFyhT/xaVfDoZuJcOQbQHsmwhKcH4uPrD3rFRg/Ig2Q=",
+        "lastModified": 1718653440,
+        "narHash": "sha256-vwGMBkf8QFoZ2x9j2123Rqd07ydwJxXhBJcgQdoBCOo=",
         "owner": "ClusterLabs",
         "repo": "pacemaker",
-        "rev": "9a6fc531ee245c9e3fc821f8ea86872b3687ecd0",
+        "rev": "dde401a5c5debd57cf09b115863693d18e68cf31",
         "type": "github"
       },
       "original": {
@@ -52,7 +52,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1718027838,
-        "narHash": "sha256-y1EqXwjgxpaV6meiyRdvNlHiKt4XgE1L8gez/ig5ax0=",
+        "narHash": "sha256-atnIj6yQjNWZTI9CwsI/G3qw63xotdm1Yk/gf0GSgSQ=",
         "owner": "ClusterLabs",
         "repo": "pcs",
         "rev": "29e776613becea520e23ca41718fad764490c6dc",
