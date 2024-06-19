@@ -11,9 +11,9 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: cachix/install-nix-action@v25
+    - uses: cachix/install-nix-action@v27
     - uses: DeterminateSystems/magic-nix-cache-action@main
-    - uses: cachix/cachix-action@v14
+    - uses: cachix/cachix-action@v15
       with:
         name: pcsd
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
