@@ -35,11 +35,11 @@
     "pacemaker-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1718653440,
-        "narHash": "sha256-vwGMBkf8QFoZ2x9j2123Rqd07ydwJxXhBJcgQdoBCOo=",
+        "lastModified": 1718744016,
+        "narHash": "sha256-nEefO8h+wPpXpXwOSVIqAU1DJvP3Lir+w4voemZcvyQ=",
         "owner": "ClusterLabs",
         "repo": "pacemaker",
-        "rev": "dde401a5c5debd57cf09b115863693d18e68cf31",
+        "rev": "abc25ce4b81fa15d61cf898ed770c95b4fde09bd",
         "type": "github"
       },
       "original": {
@@ -67,11 +67,11 @@
     "pcs-web-ui-src": {
       "flake": false,
       "locked": {
-        "lastModified": 1717058924,
-        "narHash": "sha256-EuZw2YaJeqiEdBWLJ6jT2wnFMy7dBmKusxfEEgp3YY4=",
+        "lastModified": 1718775030,
+        "narHash": "sha256-No5sMJ0X4zAgA1j8fuITB7R8VKNvcG2zo/9Kppc4IWE=",
         "owner": "ClusterLabs",
         "repo": "pcs-web-ui",
-        "rev": "41cf27aea25d42d20008fcd2bbb4cdc45eb75445",
+        "rev": "dd13b59f10bc17e1ea887ff707cbd9ad0318b3a2",
         "type": "github"
       },
       "original": {
