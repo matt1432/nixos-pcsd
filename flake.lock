@@ -52,7 +52,7 @@
       "flake": false,
       "locked": {
         "lastModified": 1718027838,
-        "narHash": "sha256-y1EqXwjgxpaV6meiyRdvNlHiKt4XgE1L8gez/ig5ax0=",
+        "narHash": "sha256-atnIj6yQjNWZTI9CwsI/G3qw63xotdm1Yk/gf0GSgSQ=",
         "owner": "ClusterLabs",
         "repo": "pcs",
         "rev": "29e776613becea520e23ca41718fad764490c6dc",
