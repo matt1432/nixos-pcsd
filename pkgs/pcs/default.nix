@@ -2,6 +2,9 @@
   autoconf,
   automake,
   bundlerEnv,
+  coreutils,
+  fetchFromGitHub,
+  hostname,
   lib,
   libffi,
   libpam-wrapper,
@@ -9,10 +12,9 @@
   pacemaker,
   corosync,
   pam,
-  pcs-src,
   pkg-config,
   psmisc,
-  pyagentx-src,
+  pyagentx,
   python3Packages,
   ruby,
   systemd,
@@ -20,28 +22,10 @@
   pcs-web-ui ? null,
   ...
 }: let
-  inherit (builtins) match;
-  inherit (lib) elemAt findFirst getLib fileContents optionalString splitString;
+  inherit (lib) getBin getExe getLib optionalString removePrefix;
 
-  regex = "^.*## [[]([.0-9]*)[]].*$";
-  tag =
-    elemAt (match regex (
-      findFirst
-      (x: (match regex x) != null)
-      ""
-      (splitString "\n" (fileContents "${pcs-src}/CHANGELOG.md"))
-    ))
-    0;
-  version =
-    if tag == pcs-src.shortRev
-    then tag
-    else "${tag}+${pcs-src.shortRev}";
-
-  pyagentx = python3Packages.buildPythonPackage {
-    pname = "pyagentx";
-    version = pyagentx-src.shortRev;
-    src = pyagentx-src;
-  };
+  pcs-src = import ./src.nix;
+  version = removePrefix "v" pcs-src.rev;
 
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
@@ -53,7 +37,7 @@ in
     pname = "pcs";
     inherit version;
 
-    src = pcs-src;
+    src = fetchFromGitHub pcs-src;
 
     # Curl test assumes network access
     doCheck = false;
@@ -61,6 +45,14 @@ in
     postUnpack = ''
       # Fix version of untagged build
       echo 'printf %s "${version}"' > $sourceRoot/make/git-version-gen
+
+
+      # Fix hardcoded paths to binaries
+      substituteInPlace $sourceRoot/pcsd/bootstrap.rb --replace-fail \
+        "/bin/hostname" "${getExe hostname}"
+
+      substituteInPlace $sourceRoot/pcsd/pcs.rb --replace-fail \
+        "/bin/cat" "${getBin coreutils}/bin/cat"
 
 
       # Fix pam path https://github.com/NixOS/nixpkgs/blob/5a072b4a9d7ccf64df63645f3ee808dc115210ba/pkgs/development/python-modules/pamela/default.nix#L20

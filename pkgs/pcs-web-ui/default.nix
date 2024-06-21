@@ -1,25 +1,18 @@
 {
-  pcs-web-ui-src,
   buildNpmPackage,
+  fetchFromGitHub,
   ...
 }: let
-  inherit (builtins) fromJSON readFile;
-
-  packageJSON = "${pcs-web-ui-src}/packages/app/package.json";
-  tag = (fromJSON (readFile packageJSON)).version;
-  version =
-    if tag == pcs-web-ui-src.shortRev
-    then tag
-    else "${tag}+${pcs-web-ui-src.shortRev}";
+  pcs-web-ui-src = import ./src.nix;
 in
   buildNpmPackage {
     pname = "pcs-web-ui";
-    inherit version;
+    version = pcs-web-ui-src.rev;
 
-    src = pcs-web-ui-src;
+    src = fetchFromGitHub pcs-web-ui-src;
     sourceRoot = "source/packages/app";
 
-    npmDepsHash = "sha256-9iRWf+rcn6G5riA0caBDv/qk3GRuU+IuoOOxVvp394E=";
+    npmDepsHash = import ./npmDepsHash.nix;
 
     buildPhase = ''
       ./.bin/build.sh ./.

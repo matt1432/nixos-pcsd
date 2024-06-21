@@ -7,6 +7,7 @@
   bzip2,
   corosync,
   dbus,
+  fetchFromGitHub,
   glib,
   gnutls,
   libqb,
@@ -14,7 +15,6 @@
   libuuid,
   libxml2,
   libxslt,
-  pacemaker-src,
   pam,
   pkg-config,
   python3,
@@ -24,28 +24,18 @@
   # as the OCF_ROOT.
   forOCF ? false,
   ocf-resource-agents,
+  ...
 }: let
-  inherit (builtins) match;
-  inherit (lib) elemAt findFirst fileContents splitString;
+  inherit (builtins) elemAt match;
+  regex = "Pacemaker-(.*)$";
 
-  regex = "[*].* Pacemaker-(.*)$";
-  tag =
-    elemAt (match regex (
-      findFirst (x: (match regex x) != null)
-      ""
-      (splitString "\n" (fileContents "${pacemaker-src}/ChangeLog"))
-    ))
-    0;
-  version =
-    if tag == pacemaker-src.shortRev
-    then tag
-    else "${tag}+${pacemaker-src.shortRev}";
+  pacemaker-src = import ./src.nix;
 in
   stdenv.mkDerivation {
     pname = "pacemaker";
-    inherit version;
+    version = elemAt (match regex pacemaker-src.rev) 0;
 
-    src = pacemaker-src;
+    src = fetchFromGitHub pacemaker-src;
 
     nativeBuildInputs = [
       autoconf

@@ -1,37 +1,23 @@
-# This combines together OCF definitions from other derivations.
-# https://github.com/ClusterLabs/resource-agents/blob/master/doc/dev-guides/ra-dev-guide.asc
 {
-  stdenv,
-  lib,
-  runCommand,
-  lndir,
-  ocf-resource-agents-src,
   autoreconfHook,
+  coreutils,
+  drbd,
+  fetchFromGitHub,
+  gawk,
+  glib,
+  iproute2,
+  lib,
+  libqb,
+  lndir,
+  pacemaker,
   pkg-config,
   python3,
-  glib,
-  drbd,
-  iproute2,
-  gawk,
-  coreutils,
-  pacemaker,
-  libqb,
+  runCommand,
+  stdenv,
+  ...
 }: let
-  inherit (builtins) match;
-  inherit (lib) elemAt findFirst fileContents splitString;
-
-  regex = "^- stable release (.*)$";
-  tag =
-    elemAt (match regex (
-      findFirst (x: (match regex x) != null)
-      ""
-      (splitString "\n" (fileContents "${ocf-resource-agents-src}/ChangeLog"))
-    ))
-    0;
-  version =
-    if tag == ocf-resource-agents-src.shortRev
-    then tag
-    else "${tag}+${ocf-resource-agents-src.shortRev}";
+  inherit (lib) removePrefix;
+  ocf-resource-agents-src = import ./src.nix;
 
   drbdForOCF = drbd.override {
     forOCF = true;
@@ -43,8 +29,8 @@
   resource-agentsForOCF = stdenv.mkDerivation {
     pname = "resource-agents";
 
-    src = ocf-resource-agents-src;
-    inherit version;
+    src = fetchFromGitHub ocf-resource-agents-src;
+    version = removePrefix "v" ocf-resource-agents-src.rev;
 
     patches = [./improve-command-detection.patch];
 
@@ -82,7 +68,6 @@
       description = "Combined repository of OCF agents from the RHCS and Linux-HA projects";
       license = licenses.gpl2Plus;
       platforms = platforms.linux;
-      maintainers = with maintainers; [ryantm astro];
     };
   };
 in

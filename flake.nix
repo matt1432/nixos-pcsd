@@ -13,40 +13,6 @@ rec {
       repo = "nixpkgs";
       ref = "nixos-unstable";
     };
-
-    # srcs
-    pacemaker-src = {
-      type = "github";
-      owner = "ClusterLabs";
-      repo = "pacemaker";
-      flake = false;
-    };
-    pcs-src = {
-      type = "github";
-      owner = "ClusterLabs";
-      repo = "pcs";
-      flake = false;
-    };
-    pcs-web-ui-src = {
-      type = "github";
-      owner = "ClusterLabs";
-      repo = "pcs-web-ui";
-      flake = false;
-    };
-    ocf-resource-agents-src = {
-      type = "github";
-      owner = "ClusterLabs";
-      repo = "resource-agents";
-      flake = false;
-    };
-
-    pyagentx-src = {
-      type = "github";
-      owner = "ondrejmular";
-      repo = "pyagentx";
-      rev = "8fcc2f056b54b92c67a264671198fd197d5a1799";
-      flake = false;
-    };
   };
 
   outputs = inputs @ {
@@ -96,6 +62,12 @@ rec {
               bundix
             '';
           })
+
+          common-updater-scripts
+          jq
+          nix-prefetch-git
+          nix-prefetch-github
+          nix-prefetch-scripts
         ];
       };
 

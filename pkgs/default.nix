@@ -2,33 +2,27 @@
   self,
   system,
   pkgs,
-  ocf-resource-agents-src,
-  pacemaker-src,
-  pcs-src,
-  pcs-web-ui-src,
-  pyagentx-src,
   ...
-}: {
-  docs = pkgs.callPackage ../docs {inherit pkgs self;};
+}: let
+  flakePkgs = self.packages.${system};
+in {
+  docs = pkgs.callPackage ../docs {inherit self;};
+
+  pyagentx = pkgs.callPackage ./pyagentx {};
 
   pcs = pkgs.callPackage ./pcs {
-    inherit pkgs pcs-src pyagentx-src;
-    inherit (self.packages.${pkgs.system}) pacemaker;
+    inherit (flakePkgs) pacemaker pyagentx;
   };
 
-  pcs-web-ui = pkgs.callPackage ./pcs-web-ui {
-    inherit pkgs pcs-web-ui-src;
-  };
+  pcs-web-ui = pkgs.callPackage ./pcs-web-ui {};
 
   pacemaker = pkgs.callPackage ./pacemaker {
-    inherit (self.packages.${pkgs.system}) ocf-resource-agents;
-    inherit pacemaker-src;
+    inherit (flakePkgs) ocf-resource-agents;
   };
 
-  ocf-resource-agents = pkgs.callPackage ./ocf-resource-agents {
-    inherit (self.packages.${pkgs.system}) pacemaker;
-    inherit ocf-resource-agents-src;
+  ocf-resource-agents = pkgs.callPackage ./resource-agents {
+    inherit (flakePkgs) pacemaker;
   };
 
-  default = self.packages.${system}.pcs;
+  default = flakePkgs.pcs;
 }

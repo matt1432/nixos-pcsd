@@ -2,11 +2,11 @@
   "nodes": {
     "nixpkgs": {
       "locked": {
-        "lastModified": 1718714799,
-        "narHash": "sha256-FUZpz9rg3gL8NVPKbqU8ei1VkPLsTIfAJ2fdAf5qjak=",
+        "lastModified": 1718895438,
+        "narHash": "sha256-k3JqJrkdoYwE3fHE6xGDY676AYmyh4U2Zw+0Bwe5DLU=",
         "owner": "NixOS",
         "repo": "nixpkgs",
-        "rev": "c00d587b1a1afbf200b1d8f0b0e4ba9deb1c7f0e",
+        "rev": "d603719ec6e294f034936c0d0dc06f689d91b6c3",
         "type": "github"
       },
       "original": {
@@ -16,95 +16,9 @@
         "type": "github"
       }
     },
-    "ocf-resource-agents-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1718798751,
-        "narHash": "sha256-2EpcqPFvO/tON/Ybw0+NLz0SbqPsyVKzwXuxR0d3nfk=",
-        "owner": "ClusterLabs",
-        "repo": "resource-agents",
-        "rev": "5a44fb668ea69fb2c2a537d3340e5a9f81c96883",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ClusterLabs",
-        "repo": "resource-agents",
-        "type": "github"
-      }
-    },
-    "pacemaker-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1718744016,
-        "narHash": "sha256-nEefO8h+wPpXpXwOSVIqAU1DJvP3Lir+w4voemZcvyQ=",
-        "owner": "ClusterLabs",
-        "repo": "pacemaker",
-        "rev": "abc25ce4b81fa15d61cf898ed770c95b4fde09bd",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ClusterLabs",
-        "repo": "pacemaker",
-        "type": "github"
-      }
-    },
-    "pcs-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1718027838,
-        "narHash": "sha256-atnIj6yQjNWZTI9CwsI/G3qw63xotdm1Yk/gf0GSgSQ=",
-        "owner": "ClusterLabs",
-        "repo": "pcs",
-        "rev": "29e776613becea520e23ca41718fad764490c6dc",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ClusterLabs",
-        "repo": "pcs",
-        "type": "github"
-      }
-    },
-    "pcs-web-ui-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1718809213,
-        "narHash": "sha256-+4FRaei5UebK84/FvuvhJlNNs0MTYWhgQbo2UTFkb7U=",
-        "owner": "ClusterLabs",
-        "repo": "pcs-web-ui",
-        "rev": "ae0e7f62a4b818d56b198a056978626fa4a609bb",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ClusterLabs",
-        "repo": "pcs-web-ui",
-        "type": "github"
-      }
-    },
-    "pyagentx-src": {
-      "flake": false,
-      "locked": {
-        "lastModified": 1511257724,
-        "narHash": "sha256-uXFRtQskF2HhHi3KhJwajPvt8c8unrBBOqxGimV74Rc=",
-        "owner": "ondrejmular",
-        "repo": "pyagentx",
-        "rev": "8fcc2f056b54b92c67a264671198fd197d5a1799",
-        "type": "github"
-      },
-      "original": {
-        "owner": "ondrejmular",
-        "repo": "pyagentx",
-        "rev": "8fcc2f056b54b92c67a264671198fd197d5a1799",
-        "type": "github"
-      }
-    },
     "root": {
       "inputs": {
-        "nixpkgs": "nixpkgs",
-        "ocf-resource-agents-src": "ocf-resource-agents-src",
-        "pacemaker-src": "pacemaker-src",
-        "pcs-src": "pcs-src",
-        "pcs-web-ui-src": "pcs-web-ui-src",
-        "pyagentx-src": "pyagentx-src"
+        "nixpkgs": "nixpkgs"
       }
     }
   },
