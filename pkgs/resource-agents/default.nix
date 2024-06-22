@@ -4,6 +4,8 @@
   drbd,
   fetchFromGitHub,
   gawk,
+  gnugrep,
+  gnused,
   glib,
   iproute2,
   lib,
@@ -57,7 +59,11 @@
     #
     # edits to ocf-binaries are a minimum to get ocf:heartbeat:IPaddr2 to function
     postInstall = ''
-      sed -i '1 iPATH=$PATH:${iproute2}/bin:${gawk}/bin:${coreutils}/bin' $out/lib/ocf/lib/heartbeat/findif.sh
+      sed -i '1 iPATH=$PATH:${iproute2}/bin:${gawk}/bin:${coreutils}/bin:${gnused}/bin:${gnugrep}/bin' $out/lib/ocf/lib/heartbeat/findif.sh
+      sed -i '1 iPATH=$PATH:${coreutils}/bin' $out/lib/ocf/lib/heartbeat/ocf-shellfuncs
+      sed -i '1 iPATH=$PATH:${coreutils}/bin' $out/lib/ocf/lib/heartbeat/ocf-directories
+      sed -i '1 iPATH=$PATH:${gnused}/bin' $out/lib/ocf/lib/heartbeat/ocf-binaries
+      sed -i '1 iPATH=$PATH:${coreutils}/bin:${gnused}/bin:${gnugrep}/bin' $out/lib/ocf/resource.d/heartbeat/IPaddr2
       patchShebangs $out/lib/ocf/lib/heartbeat
       sed -i -e "s|AWK:=.*|AWK:=${gawk}/bin/awk}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
       sed -i -e "s|IP2UTIL:=ip|IP2UTIL:=${iproute2}/bin/ip}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
