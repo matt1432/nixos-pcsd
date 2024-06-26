@@ -2,9 +2,7 @@
   autoconf,
   automake,
   bundlerEnv,
-  coreutils,
   fetchFromGitHub,
-  hostname,
   lib,
   libffi,
   libpam-wrapper,
@@ -22,7 +20,7 @@
   pcs-web-ui ? null,
   ...
 }: let
-  inherit (lib) getBin getExe getLib optionalString removePrefix;
+  inherit (lib) getLib optionalString removePrefix;
 
   pcs-src = import ./src.nix;
   version = removePrefix "v" pcs-src.rev;
@@ -45,14 +43,6 @@ in
     postUnpack = ''
       # Fix version of untagged build
       echo 'printf %s "${version}"' > $sourceRoot/make/git-version-gen
-
-
-      # Fix hardcoded paths to binaries
-      substituteInPlace $sourceRoot/pcsd/bootstrap.rb --replace-fail \
-        "/bin/hostname" "${getExe hostname}"
-
-      substituteInPlace $sourceRoot/pcsd/pcs.rb --replace-fail \
-        "/bin/cat" "${getBin coreutils}/bin/cat"
 
 
       # Fix pam path https://github.com/NixOS/nixpkgs/blob/5a072b4a9d7ccf64df63645f3ee808dc115210ba/pkgs/development/python-modules/pamela/default.nix#L20
