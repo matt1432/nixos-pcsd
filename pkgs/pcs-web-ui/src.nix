@@ -2,6 +2,6 @@
 {
   owner = "ClusterLabs";
   repo = "pcs-web-ui";
-  rev = "0.1.19";
-  hash = "sha256-Iqk0sFAR7RVi+wNRvZEBU9q/kIoVlarzOI8s/8XDGFU=";
+  rev = "0.1.20.RC1";
+  hash = "sha256-ZEVYKnzVzfBYS6tE/n614d7humwDn+4rZ0JRnHo1BHU=";
 }
