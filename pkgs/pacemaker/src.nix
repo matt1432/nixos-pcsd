@@ -2,6 +2,6 @@
 {
   owner = "ClusterLabs";
   repo = "pacemaker";
-  rev = "Pacemaker-2.1.8-rc2";
-  hash = "sha256-spZMJHiU7jCMeaAmhiDqYVYJCbaesYNGrW6oVHySf2A=";
+  rev = "Pacemaker-2.1.8-rc3";
+  hash = "sha256-EnnjTHazgRyM5hku8GzmB7sSMCcSmyIhe+RYzJ7/0Ts=";
 }
