@@ -50,7 +50,7 @@ getLatestTag() {
     cd /tmp || return
     git clone "https://github.com/$owner/$repo" &> /dev/null
     cd "$repo" || return
-    tag=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=2) | sort -r | head -n 1)
+    tag=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=5) | sort -r | head -n 1)
     cd ..
     rm -rf "$repo" &> /dev/null
 
