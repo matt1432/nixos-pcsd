@@ -43,29 +43,35 @@ updateRubyDeps() {
     git_push "chore: update ruby deps"
 }
 
-getLatestTag() {
-    owner="$1"
-    repo="$2"
+getLatest() {
+    type="$1"
+    owner="$2"
+    repo="$3"
 
-    cd /tmp || return
-    git clone "https://github.com/$owner/$repo" &> /dev/null
-    cd "$repo" || return
-    tag=$(git describe --abbrev=0 --tags $(git rev-list --tags --max-count=5) | sort -r | head -n 1)
-    cd ..
-    rm -rf "$repo" &> /dev/null
+    case "$type" in
+        release)
+            curl -s "https://api.github.com/repos/$owner/$repo/releases/latest" | jq -r .tag_name
+        ;;
 
-    echo "$tag"
+        prerelease)
+            curl -s "https://api.github.com/repos/$owner/$repo/releases" |
+                jq -r 'map(.tag_name)[]' |
+                sort -r |
+                head -n 1
+        ;;
+    esac
 }
 
 updatePackage() {
     nix flake update
 
-    owner="$1"
-    repo="$2"
+    versionType="$1"
+    owner="$2"
+    repo="$3"
     file="$ROOT_DIR/pkgs/$repo/src.nix"
 
     current_version=$(nix eval --json --file "$file" | jq -r .rev)
-    new_version=$(getLatestTag "$owner" "$repo")
+    new_version=$(getLatest "$versionType" "$owner" "$repo")
 
     if [[ "$new_version" != "$current_version" ]]; then
         hash=$(nix-prefetch-github "$owner" "$repo" --rev "$new_version" |
@@ -93,7 +99,7 @@ updatePackage() {
 }
 
 updateRubyDeps
-updatePackage "ClusterLabs" "pacemaker"
-updatePackage "ClusterLabs" "pcs-web-ui"
-updatePackage "ClusterLabs" "resource-agents"
-updatePackage "ClusterLabs" "pcs"
+updatePackage "prerelease" "ClusterLabs" "pacemaker" # TODO: move to release once 2.18 comes out
+updatePackage "release" "ClusterLabs" "pcs-web-ui"
+updatePackage "release" "ClusterLabs" "resource-agents"
+updatePackage "prerelease" "ClusterLabs" "pcs" # TODO: move to release once 0.12 comes out
