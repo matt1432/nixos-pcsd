@@ -5,6 +5,7 @@ self: {
   ...
 }: let
   inherit (lib) mkEnableOption mkIf mkPackageOption;
+
   inherit (self.packages.${pkgs.system}) ocf-resource-agents;
 
   cfg = config.services.pacemaker;

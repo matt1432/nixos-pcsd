@@ -1,10 +1,9 @@
 {
   self,
-  system,
   pkgs,
   ...
 }: let
-  flakePkgs = self.packages.${system};
+  flakePkgs = self.packages.${pkgs.system};
 in {
   docs = pkgs.callPackage ../docs {inherit self;};
 

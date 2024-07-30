@@ -8,16 +8,8 @@ self: nixConfig: {
   inherit (lib.attrsets) attrNames attrValues listToAttrs filterAttrs hasAttr mapAttrsToList;
   inherit (lib.lists) all any elemAt findFirst length;
   inherit (lib.modules) mkForce mkIf;
-  inherit (lib.options) mdDoc mkEnableOption mkOption;
-  inherit
-    (lib.strings)
-    hasInfix
-    concatMapStringsSep
-    concatStringsSep
-    optionalString
-    removePrefix
-    toJSON
-    ;
+  inherit (lib.options) mkEnableOption mkOption;
+  inherit (lib.strings) hasInfix concatMapStringsSep concatStringsSep optionalString removePrefix toJSON;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
@@ -30,29 +22,28 @@ self: nixConfig: {
     pcs
     ;
 
-  startDesc = after:
-    mdDoc ''
-      Determines what resources need to be started ${
-        if after
-        then "after"
-        else "before"
-      }
-      this one.\
-      Requires a group.\
-      Can only be the name of resources in the same group and cannot
-      be the name of this ressource.
-    '';
+  startDesc = after: ''
+    Determines what resources need to be started ${
+      if after
+      then "after"
+      else "before"
+    }
+    this one.\
+    Requires a group.\
+    Can only be the name of resources in the same group and cannot
+    be the name of this ressource.
+  '';
 in {
   disabledModules = [pacemakerPath];
   imports = [self.nixosModules.pacemaker];
 
   options.services.pcsd = {
-    enable = mkEnableOption (mdDoc "pcsd");
+    enable = mkEnableOption "pcsd";
 
     enableBinaryCache = mkOption {
       type = types.bool;
       default = false;
-      description = mdDoc ''
+      description = ''
         Option to add the binary cache to your settings.
       '';
     };
@@ -60,7 +51,7 @@ in {
     # Corosync options
     corosyncKeyFile = mkOption {
       type = with types; nullOr path;
-      description = mdDoc ''
+      description = ''
         Required path to a file containing the key for corosync.\
         See `corosync-keygen(8)`.
       '';
@@ -69,7 +60,7 @@ in {
     clusterName = mkOption {
       type = types.str;
       default = "nixcluster";
-      description = mdDoc ''
+      description = ''
         Name of the cluster. This option will be passed to `services.corosync.clusterName`.
       '';
     };
@@ -78,7 +69,7 @@ in {
       type = types.str;
       default = (elemAt cfg.nodes 0).name;
       defaultText = "Name of your first node";
-      description = mdDoc ''
+      description = ''
         The name of the node in charge of updating the cluster settings.\
         Defaults to the first node declared in `services.pcsd.nodes`.
       '';
@@ -86,7 +77,7 @@ in {
 
     nodes = mkOption {
       default = [];
-      description = mdDoc ''
+      description = ''
         List of nodes in the cluster. This option will be passed to `services.corosync.nodelist`.
       '';
       example = literalExpression ''
@@ -107,15 +98,15 @@ in {
         options = {
           nodeid = mkOption {
             type = types.int;
-            description = mdDoc "Node ID number.";
+            description = "Node ID number.";
           };
           name = mkOption {
             type = types.str;
-            description = mdDoc "Node name.";
+            description = "Node name.";
           };
           ring_addrs = mkOption {
             type = types.listOf types.str;
-            description = mdDoc "List of IP addresses, one for each ring.";
+            description = "List of IP addresses, one for each ring.";
           };
         };
       });
@@ -145,7 +136,7 @@ in {
           withWebUI = false;
         }
       '';
-      description = mdDoc ''
+      description = ''
         The package defined by `services.pcsd.package` with overrides applied.
       '';
     };
@@ -153,7 +144,7 @@ in {
     enableWebUI = mkOption {
       type = types.bool;
       default = false;
-      description = mdDoc ''
+      description = ''
         Enable the webUI of pcsd.
       '';
     };
@@ -170,14 +161,14 @@ in {
 
     clusterUserPasswordFile = mkOption {
       type = with types; nullOr path;
-      description = mdDoc ''
+      description = ''
         Required path to a file containing the password of the `hacluster` user in clear text.
       '';
     };
 
     systemdResources = mkOption {
       default = {};
-      description = mdDoc ''
+      description = ''
         An attribute set that represents all the systemd services that will
         be managed by pcsd.
       '';
@@ -200,7 +191,7 @@ in {
           enable = mkOption {
             type = types.bool;
             default = true;
-            description = mdDoc ''
+            description = ''
               Whether this service is managed by pcs or not. If not enabled,
               this service can only be started by a user manually.
             '';
@@ -209,7 +200,7 @@ in {
           systemdName = mkOption {
             type = types.str;
             default = name;
-            description = mdDoc ''
+            description = ''
               The name of the systemd unit file without '.service'.\
               By default, this option will use the name of this attribute.
             '';
@@ -218,7 +209,7 @@ in {
           group = mkOption {
             type = with types; nullOr str;
             default = null;
-            description = mdDoc ''
+            description = ''
               The name of the group in which we want to place this resource.\
               This allows multiple resources to always be on the same node and
               can also make the order in which the resources start configurable.
@@ -240,7 +231,7 @@ in {
           extraArgs = mkOption {
             type = with types; listOf str;
             default = [];
-            description = mdDoc ''
+            description = ''
               Additional command line options added to pcs commands when making a systemd resource.
             '';
           };
@@ -250,7 +241,7 @@ in {
 
     virtualIps = mkOption {
       default = {};
-      description = mdDoc ''
+      description = ''
         An attribute set that represents all the virtual IPs that will
         be managed by pcsd.
       '';
@@ -269,7 +260,7 @@ in {
           id = mkOption {
             type = types.str;
             default = name;
-            description = mdDoc ''
+            description = ''
               The name of the resource as pacemaker sees it.\
               By default, this option will use the name of this attribute.
             '';
@@ -278,24 +269,24 @@ in {
           interface = mkOption {
             type = types.str;
             default = "eno1";
-            description = mdDoc "The network interface this IP will be bound to.";
+            description = "The network interface this IP will be bound to.";
           };
 
           ip = mkOption {
             type = types.str;
-            description = mdDoc "The actual IP address.";
+            description = "The actual IP address.";
           };
 
           cidr = mkOption {
             type = types.int;
             default = 24;
-            description = mdDoc "The CIDR range of the IP.";
+            description = "The CIDR range of the IP.";
           };
 
           group = mkOption {
             type = with types; nullOr str;
             default = null;
-            description = mdDoc ''
+            description = ''
               The name of the group in which we want to place this resource.\
               This allows multiple resources to always be on the same node and
               can also make the order in which the resources start configurable.
@@ -317,7 +308,7 @@ in {
           extraArgs = mkOption {
             type = with types; listOf str;
             default = [];
-            description = mdDoc ''
+            description = ''
               Additional command line options added to pcs commands when making a virtual IP.
             '';
           };
@@ -328,7 +319,7 @@ in {
     extraCommands = mkOption {
       type = with types; listOf (strMatching "^(pcs .*)$");
       default = [];
-      description = mdDoc ''
+      description = ''
         A list of additional `pcs` commands to run after everything else is setup.\
         Cannot have the `-f` option.\
         See `pcs(8)`

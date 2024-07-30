@@ -15,11 +15,11 @@ rec {
     };
   };
 
-  outputs = inputs @ {
+  outputs = {
     self,
     nixpkgs,
     ...
-  }: let
+  } @ inputs: let
     supportedSystems = [
       "x86_64-linux"
       "x86_64-darwin"
@@ -29,11 +29,11 @@ rec {
 
     perSystem = attrs:
       nixpkgs.lib.genAttrs supportedSystems (system:
-        attrs system nixpkgs.legacyPackages.${system});
+        attrs (import nixpkgs {inherit system;}));
   in {
     packages =
-      perSystem (system: pkgs:
-        import ./pkgs ({inherit self system pkgs;} // inputs));
+      perSystem (pkgs:
+        import ./pkgs ({inherit self pkgs;} // inputs));
 
     nixosModules = {
       pacemaker = import ./modules/pacemaker.nix self;
@@ -41,9 +41,9 @@ rec {
       default = self.nixosModules.pcsd;
     };
 
-    formatter = perSystem (_: pkgs: pkgs.alejandra);
+    formatter = perSystem (pkgs: pkgs.alejandra);
 
-    devShells = perSystem (_: pkgs: {
+    devShells = perSystem (pkgs: {
       update = pkgs.mkShell {
         packages = with pkgs; [
           alejandra
@@ -71,8 +71,8 @@ rec {
         ];
       };
 
-      docs = with pkgs; let
-        inputs = [
+      docs = let
+        inputs = with pkgs; [
           git
           nix
           mkdocs
@@ -81,19 +81,19 @@ rec {
           python3Packages.pygments
         ];
       in
-        mkShell {
+        pkgs.mkShell {
           packages =
             [
-              (writeShellApplication {
+              (pkgs.writeShellApplication {
                 name = "localDeploy";
                 runtimeInputs = inputs;
                 text = "(nix build --option binary-caches \"https://cache.nixos.org\" .#docs && cd result && mkdocs serve)";
               })
 
-              (writeShellApplication {
+              (pkgs.writeShellApplication {
                 name = "ghDeploy";
                 runtimeInputs = inputs;
-                text = lib.fileContents ./docs/deploy.sh;
+                text = builtins.readFile ./docs/deploy.sh;
               })
             ]
             ++ inputs;
