@@ -26,7 +26,8 @@
   ocf-resource-agents,
   ...
 }: let
-  inherit (builtins) elemAt match;
+  inherit (lib) elemAt match optionals;
+
   regex = "Pacemaker-(.*)$";
 
   pacemaker-src = import ./src.nix;
@@ -73,13 +74,16 @@ in
         # allows Type=notify in the systemd service
         "--enable-systemd"
       ]
-      ++ lib.optional (!forOCF) "--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf";
+      ++ optionals (!forOCF) ["--with-ocfdir=${ocf-resource-agents}/usr/lib/ocf"];
 
     installFlags = ["DESTDIR=${placeholder "out"}"];
 
-    env.NIX_CFLAGS_COMPILE = toString (lib.optionals stdenv.cc.isGNU [
-      "-Wno-error=strict-prototypes"
-    ]);
+    env.NIX_CFLAGS_COMPILE = toString ([
+        "-Wno-error=deprecated-declarations"
+      ]
+      ++ optionals stdenv.cc.isGNU [
+        "-Wno-error=strict-prototypes"
+      ]);
 
     enableParallelBuilding = true;
 
