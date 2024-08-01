@@ -66,10 +66,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0rwbq20s2gdh8dljjsgj5s6wqqfmnbclhvv2c2608brv7jm6jdbd";
+      sha256 = "0cmrbghmkdy9v0al8jf6rdhjz838zb34a9jid911ii1z4l09rxfb";
       type = "gem";
     };
-    version = "3.0.0";
+    version = "3.0.1";
   };
   nio4r = {
     groups = ["default"];
@@ -162,10 +162,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0zr5qpa8lampaqzhdcjcvyqnrqcjl7439mqjlkjz43wdhmpnh4s5";
+      sha256 = "0580cvf3fcdh44bmjiv0wjz47848c90rnv041crddn4w46ccvh28";
       type = "gem";
     };
-    version = "3.3.2";
+    version = "3.3.3";
   };
   ruby2_keywords = {
     groups = ["default"];
