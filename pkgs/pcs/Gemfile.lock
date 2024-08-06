@@ -3,7 +3,8 @@ GEM
   specs:
     backports (3.25.0)
     base64 (0.2.0)
-    childprocess (5.0.0)
+    childprocess (5.1.0)
+      logger (~> 1.5)
     ethon (0.16.0)
       ffi (>= 1.15.0)
     ffi (1.17.0)
@@ -18,6 +19,7 @@ GEM
     ffi (1.17.0-x86_64-linux-gnu)
     ffi (1.17.0-x86_64-linux-musl)
     json (2.7.2)
+    logger (1.6.0)
     mustermann (3.0.1)
       ruby2_keywords (~> 0.0.1)
     nio4r (2.7.3)

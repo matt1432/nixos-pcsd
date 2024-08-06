@@ -20,14 +20,15 @@
     version = "0.2.0";
   };
   childprocess = {
+    dependencies = ["logger"];
     groups = ["default"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0dfq21rszw5754llkh4jc58j2h8jswqpcxm3cip1as3c3nmvfih7";
+      sha256 = "1v5nalaarxnfdm6rxb7q6fmc6nx097jd630ax6h9ch7xw95li3cs";
       type = "gem";
     };
-    version = "5.0.0";
+    version = "5.1.0";
   };
   ethon = {
     dependencies = ["ffi"];
@@ -59,6 +60,16 @@
       type = "gem";
     };
     version = "2.7.2";
+  };
+  logger = {
+    groups = ["default"];
+    platforms = [];
+    source = {
+      remotes = ["https://rubygems.org"];
+      sha256 = "0gpg8gzi0xwymw4aaq2iafcbx31i3xzkg3fb30mdxn1d4qhc3dqa";
+      type = "gem";
+    };
+    version = "1.6.0";
   };
   mustermann = {
     dependencies = ["ruby2_keywords"];
