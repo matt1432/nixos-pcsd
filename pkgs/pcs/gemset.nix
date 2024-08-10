@@ -77,10 +77,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0cmrbghmkdy9v0al8jf6rdhjz838zb34a9jid911ii1z4l09rxfb";
+      sha256 = "1z31g4b1xqb4f4ynxbfxdhhdffqlgq546mjml6cfmspxvz0bn49a";
       type = "gem";
     };
-    version = "3.0.1";
+    version = "3.0.2";
   };
   nio4r = {
     groups = ["default"];
