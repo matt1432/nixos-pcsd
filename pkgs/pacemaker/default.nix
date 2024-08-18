@@ -78,12 +78,10 @@ in
 
     installFlags = ["DESTDIR=${placeholder "out"}"];
 
-    env.NIX_CFLAGS_COMPILE = toString ([
-        "-Wno-error=deprecated-declarations"
-      ]
-      ++ optionals stdenv.cc.isGNU [
-        "-Wno-error=strict-prototypes"
-      ]);
+    env.NIX_CFLAGS_COMPILE = toString (optionals stdenv.cc.isGNU [
+      "-Wno-error=deprecated-declarations"
+      "-Wno-error=strict-prototypes"
+    ]);
 
     enableParallelBuilding = true;
 
