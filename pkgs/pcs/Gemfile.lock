@@ -37,7 +37,7 @@ GEM
     rackup (2.1.0)
       rack (>= 3)
       webrick (~> 1.8)
-    rexml (3.3.5)
+    rexml (3.3.6)
       strscan
     ruby2_keywords (0.0.5)
     sinatra (4.0.0)
