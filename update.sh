@@ -99,7 +99,7 @@ updatePackage() {
 }
 
 updateRubyDeps
-updatePackage "prerelease" "ClusterLabs" "pacemaker" # TODO: move to release once 2.18 comes out
+updatePackage "release" "ClusterLabs" "pacemaker"
 updatePackage "release" "ClusterLabs" "pcs-web-ui"
 updatePackage "release" "ClusterLabs" "resource-agents"
 updatePackage "prerelease" "ClusterLabs" "pcs" # TODO: move to release once 0.12 comes out
