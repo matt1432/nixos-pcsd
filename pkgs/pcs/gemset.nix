@@ -77,10 +77,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "1z31g4b1xqb4f4ynxbfxdhhdffqlgq546mjml6cfmspxvz0bn49a";
+      sha256 = "123ycmq6pkivv29bqbv79jv2cs04xakzd0fz1lalgvfs5nxfky6i";
       type = "gem";
     };
-    version = "3.0.2";
+    version = "3.0.3";
   };
   nio4r = {
     groups = ["default"];
@@ -168,15 +168,14 @@
     version = "2.1.0";
   };
   rexml = {
-    dependencies = ["strscan"];
     groups = ["default"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "1ik3in0957l9s6iwdm3nsk4za072cj27riiqgpx6zzcd22flbw3s";
+      sha256 = "09shc1dvg88c4yx83d4c9wf26z838nlapa3cmlq8iqdci39a98v2";
       type = "gem";
     };
-    version = "3.3.6";
+    version = "3.3.7";
   };
   ruby2_keywords = {
     groups = ["default"];
@@ -198,16 +197,6 @@
       type = "gem";
     };
     version = "4.0.0";
-  };
-  strscan = {
-    groups = ["default"];
-    platforms = [];
-    source = {
-      remotes = ["https://rubygems.org"];
-      sha256 = "0mamrl7pxacbc79ny5hzmakc9grbjysm3yy6119ppgsg44fsif01";
-      type = "gem";
-    };
-    version = "3.1.0";
   };
   test-unit = {
     dependencies = ["power_assert"];
