@@ -157,15 +157,15 @@
     version = "2.1.0";
   };
   rackup = {
-    dependencies = ["rack" "webrick"];
+    dependencies = ["rack"];
     groups = ["default"];
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0kbcka30g681cqasw47pq93fxjscq7yvs5zf8lp3740rb158ijvf";
+      sha256 = "0galx82kpns9dp02mmrhlivzxszr5rdv364rrf97cj9j1q65scvj";
       type = "gem";
     };
-    version = "2.1.0";
+    version = "2.2.0";
   };
   rexml = {
     groups = ["default"];
@@ -218,15 +218,5 @@
       type = "gem";
     };
     version = "2.4.0";
-  };
-  webrick = {
-    groups = ["default"];
-    platforms = [];
-    source = {
-      remotes = ["https://rubygems.org"];
-      sha256 = "089gy5494j560b242vi173wnbj2913hwlwnjkpzld58r96ilc5s3";
-      type = "gem";
-    };
-    version = "1.8.2";
   };
 }
