@@ -2,6 +2,6 @@
 {
   owner = "ClusterLabs";
   repo = "resource-agents";
-  rev = "v4.15.1";
-  hash = "sha256-xdQwH518r9JHbp8boNhWF+ys+tF7gbYg/6f7sagFpog=";
+  rev = "v4.16.0";
+  hash = "sha256-d8rZj01z0J5/CaIQwnqAwAdKErqrlL/RdbfS0/+aS2E=";
 }
