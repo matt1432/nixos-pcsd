@@ -129,10 +129,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0c5c09cniv02vly4z7vfha9kb1ps004pfz4yikq3vx98ig8508y3";
+      sha256 = "0sniswjyi0yn949l776h7f67rvx5w9f04wh69z5g19vlsnjm98ji";
       type = "gem";
     };
-    version = "4.1.0";
+    version = "4.1.1";
   };
   rack-session = {
     dependencies = ["rack"];
@@ -193,10 +193,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "1xwx7r5y7c308vrcz0lmsgicqgi5iil8pbi6jf59rm43dmzj3lr7";
+      sha256 = "002dkzdc1xqhvz5sdnj4vb0apczhs07mnpgq4kkd5dd1ka2pp6af";
       type = "gem";
     };
-    version = "4.1.0";
+    version = "4.1.1";
   };
   test-unit = {
     dependencies = ["power_assert"];
