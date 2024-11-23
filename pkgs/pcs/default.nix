@@ -35,6 +35,8 @@ in
     pname = "pcs";
     inherit version;
 
+    pyproject = true;
+
     src = fetchFromGitHub pcs-src;
 
     # Curl test assumes network access
