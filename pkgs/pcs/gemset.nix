@@ -204,10 +204,10 @@
     platforms = [];
     source = {
       remotes = ["https://rubygems.org"];
-      sha256 = "0xzpmhnxxrwsv468sv8prm0a2945mnp9z1zla6yg5610530cf905";
+      sha256 = "123nva6drkd4yb5pgrf630siddvqckyh97a9nz475lxn5zfxfjvs";
       type = "gem";
     };
-    version = "3.6.3";
+    version = "3.6.4";
   };
   tilt = {
     groups = ["default"];
