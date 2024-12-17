@@ -19,4 +19,8 @@ jobs:
         authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
 
     - name: Build package
-      run: nix build --print-build-logs --accept-flake-config
+      run: |
+        nix build .#ocf-resource-agents --print-build-logs --accept-flake-config
+        nix build .#pacemaker --print-build-logs --accept-flake-config
+        nix build .#pcs-web-ui --print-build-logs --accept-flake-config
+        nix build .#pcs --print-build-logs --accept-flake-config
