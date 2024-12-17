@@ -2,26 +2,24 @@
   self,
   pkgs,
   ...
-}: let
-  flakePkgs = self.packages.${pkgs.system};
-in {
+}: rec {
   docs = pkgs.callPackage ../docs {inherit self;};
 
   pyagentx = pkgs.callPackage ./pyagentx {};
 
   pcs = pkgs.callPackage ./pcs {
-    inherit (flakePkgs) pacemaker pyagentx;
+    inherit pacemaker pyagentx;
   };
 
   pcs-web-ui = pkgs.callPackage ./pcs-web-ui {};
 
   pacemaker = pkgs.callPackage ./pacemaker {
-    inherit (flakePkgs) ocf-resource-agents;
+    inherit ocf-resource-agents;
   };
 
   ocf-resource-agents = pkgs.callPackage ./resource-agents {
-    inherit (flakePkgs) pacemaker;
+    inherit pacemaker;
   };
 
-  default = flakePkgs.pcs;
+  default = pcs;
 }

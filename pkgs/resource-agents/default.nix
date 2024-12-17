@@ -1,24 +1,28 @@
 {
+  lib,
+  stdenv,
+  # nix build inputs
   autoreconfHook,
-  coreutils,
-  drbd,
   fetchFromGitHub,
+  runCommand,
+  # misc tools
+  coreutils,
   gawk,
   gnugrep,
   gnused,
+  lndir,
+  # deps
+  drbd,
   glib,
   iproute2,
-  lib,
   libqb,
-  lndir,
   pacemaker,
   pkg-config,
   python3,
-  runCommand,
-  stdenv,
   ...
 }: let
-  inherit (lib) removePrefix;
+  inherit (lib) optionals removePrefix unsafeGetAttrPos versionAtLeast;
+
   ocf-resource-agents-src = import ./src.nix;
 
   drbdForOCF = drbd.override {
@@ -47,7 +51,7 @@
       libqb
     ];
 
-    env.NIX_CFLAGS_COMPILE = toString (lib.optionals (stdenv.cc.isGNU && lib.versionAtLeast stdenv.cc.version "12") [
+    env.NIX_CFLAGS_COMPILE = toString (optionals (stdenv.cc.isGNU && versionAtLeast stdenv.cc.version "12") [
       # Needed with GCC 12 but breaks on darwin (with clang) or older gcc
       "-Wno-error=maybe-uninitialized"
     ]);
@@ -69,11 +73,11 @@
       sed -i -e "s|IP2UTIL:=ip|IP2UTIL:=${iproute2}/bin/ip}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
     '';
 
-    meta = with lib; {
+    meta = {
       homepage = "https://github.com/ClusterLabs/resource-agents";
       description = "Combined repository of OCF agents from the RHCS and Linux-HA projects";
-      license = licenses.gpl2Plus;
-      platforms = platforms.linux;
+      license = lib.licenses.gpl2Plus;
+      platforms = lib.platforms.linux;
     };
   };
 in
@@ -83,7 +87,7 @@ in
     # Fix derivation location so things like
     #   $ nix edit -f. ocf-resource-agents
     # just work.
-    pos = builtins.unsafeGetAttrPos "version" resource-agentsForOCF;
+    pos = unsafeGetAttrPos "version" resource-agentsForOCF;
 
     # Useful to build and undate inputs individually:
     passthru.inputs = {

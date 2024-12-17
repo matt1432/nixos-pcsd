@@ -1,9 +1,12 @@
 {
-  autoconf,
-  automake,
+  lib,
+  python3Packages,
+  # nix build inputs
   bundlerEnv,
   fetchFromGitHub,
-  lib,
+  # deps
+  autoconf,
+  automake,
   libffi,
   libpam-wrapper,
   nss,
@@ -13,9 +16,9 @@
   pkg-config,
   psmisc,
   pyagentx,
-  python3Packages,
   ruby,
   systemd,
+  # overrides
   withWebUI ? false,
   pcs-web-ui ? null,
   ...
@@ -138,13 +141,8 @@ in
         wheel
       ]);
 
-    installPhase =
-      ''
-        make
-        make install
-      ''
-      + optionalString withWebUI ''
-        rm -r $out/lib/pcsd/public/
-        ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
-      '';
+    postInstall = optionalString withWebUI ''
+      rm -r $out/lib/pcsd/public/
+      ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
+    '';
   }

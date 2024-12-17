@@ -1,13 +1,15 @@
 {
   lib,
   stdenv,
+  # nix build inputs
+  fetchFromGitHub,
+  # deps
   autoconf,
   automake,
   bash,
   bzip2,
   corosync,
   dbus,
-  fetchFromGitHub,
   glib,
   gnutls,
   libqb,
@@ -18,10 +20,7 @@
   pam,
   pkg-config,
   python3,
-  # Pacemaker is compiled twice, once with forOCF = true to extract its
-  # OCF definitions for use in the ocf-resource-agents derivation, then
-  # again with forOCF = false, where the ocf-resource-agents is provided
-  # as the OCF_ROOT.
+  # overrides
   forOCF ? false,
   ocf-resource-agents,
   ...
@@ -91,10 +90,10 @@ in
       rm -r $out/nix
     '';
 
-    meta = with lib; {
+    meta = {
       homepage = "https://clusterlabs.org/pacemaker/";
       description = "Pacemaker is an open source, high availability resource manager suitable for both small and large clusters.";
-      license = licenses.gpl2Plus;
-      platforms = platforms.linux;
+      license = lib.licenses.gpl2Plus;
+      platforms = lib.platforms.linux;
     };
   }

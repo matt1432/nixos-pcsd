@@ -5,7 +5,7 @@
 }:
 python3Packages.buildPythonPackage {
   pname = "pyagentx";
-  version = "8fcc2f05";
+  version = "0.0.0+8fcc2f05";
 
   src = fetchFromGitHub {
     owner = "ondrejmular";
