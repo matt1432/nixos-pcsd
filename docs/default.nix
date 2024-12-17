@@ -2,10 +2,12 @@
   callPackage,
   mkdocs,
   python3Packages,
-  stdenv,
   self,
+  stdenv,
+  writers,
   ...
 }: let
+  mkdocsConf = writers.writeYAML "mkdocs.yml" (import ./mkdocs.nix);
   options-doc = callPackage ./options-doc.nix {inherit self;};
 
   syntaxReplace = ''
@@ -25,15 +27,13 @@ in
     ];
 
     buildPhase = ''
-      cp -a ${./mkdocs.yml} ./mkdocs.yml
+      cp -a ${mkdocsConf} ./mkdocs.yml
+      cp -a ./mkdocs.yml ./docs/mkdocs.yml
+
       cp -a ${options-doc}/* "./docs/"
 
-      # FIXME: https://github.com/mkdocs/mkdocs/issues/3563
       substituteInPlace ./docs/* \
-        --replace '\<name>' '<name\>'
-
-      substituteInPlace ./docs/* \
-        --replace '${syntaxReplace}' '${syntaxReplace}${syntaxSettings}'
+        --replace-quiet '${syntaxReplace}' '${syntaxReplace}${syntaxSettings}'
 
       mkdocs build
     '';
