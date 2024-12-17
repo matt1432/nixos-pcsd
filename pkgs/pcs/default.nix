@@ -141,6 +141,15 @@ in
         wheel
       ]);
 
+    installPhase = ''
+      runHook preInstall
+
+      make
+      make install
+
+      runHook postInstall
+    '';
+
     postInstall = optionalString withWebUI ''
       rm -r $out/lib/pcsd/public/
       ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
