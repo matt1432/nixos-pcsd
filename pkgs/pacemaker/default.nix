@@ -3,6 +3,7 @@
   stdenv,
   # nix build inputs
   fetchFromGitHub,
+  nix-update-script,
   # deps
   autoconf,
   automake,
@@ -25,17 +26,20 @@
   ocf-resource-agents,
   ...
 }: let
-  inherit (lib) elemAt match optionals;
+  inherit (lib) concatStringsSep optionals;
 
-  regex = "Pacemaker-(.*)$";
-
-  pacemaker-src = import ./src.nix;
+  pname = "pacemaker";
+  version = "2.1.9";
 in
   stdenv.mkDerivation {
-    pname = "pacemaker";
-    version = elemAt (match regex pacemaker-src.rev) 0;
+    inherit pname version;
 
-    src = fetchFromGitHub pacemaker-src;
+    src = fetchFromGitHub {
+      owner = "ClusterLabs";
+      repo = "pacemaker";
+      rev = "Pacemaker-${version}";
+      hash = "sha256-L/LQS5XLps0pqTfMAh1ZiR00SVltrNxMl6DXQhXBw1Q=";
+    };
 
     nativeBuildInputs = [
       autoconf
@@ -89,6 +93,10 @@ in
       mv $out$out/* $out
       rm -r $out/nix
     '';
+
+    passthru.updateScript = concatStringsSep " " (nix-update-script {
+      extraArgs = ["--flake" pname];
+    });
 
     meta = {
       homepage = "https://clusterlabs.org/pacemaker/";

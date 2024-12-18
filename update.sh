@@ -78,6 +78,4 @@ updatePackage() {
 }
 
 updateRubyDeps
-updatePackage "release" "ClusterLabs" "pacemaker"
-updatePackage "release" "ClusterLabs" "resource-agents"
 updatePackage "prerelease" "ClusterLabs" "pcs" # TODO: move to release once 0.12 comes out
