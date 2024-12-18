@@ -1,4 +1,4 @@
-name: "Update"
+name: "update"
 on:
   workflow_dispatch:
   schedule:
@@ -7,10 +7,35 @@ jobs:
   update:
     runs-on: ubuntu-latest
     steps:
+    - uses: actions/create-github-app-token@v1
+      id: generate-token
+      with:
+        app-id: ${{ secrets.APP_ID }}
+        private-key: ${{ secrets.APP_PRIVATE_KEY }}
+
     - uses: actions/checkout@v4
-    - name: setup-nix
-      uses: cachix/install-nix-action@v27
+    - uses: cachix/install-nix-action@v30
       with:
         github_access_token: ${{ secrets.GITHUB_TOKEN }}
+
+    - uses: DeterminateSystems/magic-nix-cache-action@main
+    - uses: cachix/cachix-action@v15
+      with:
+        name: pcsd
+        authToken: '${{ secrets.CACHIX_AUTH_TOKEN }}'
+
     - name: update
       run: ./update.sh --commit
+
+    - name: Create Pull Request
+      id: cpr
+      uses: peter-evans/create-pull-request@v7
+      with:
+        token: ${{ steps.generate-token.outputs.token }}
+        committer: github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>
+        author: ${{ github.actor }} <${{ github.actor_id }}+${{ github.actor }}@users.noreply.github.com>
+        signoff: false
+        branch: updates
+        delete-branch: true
+        title: '[CI] Package updates'
+        draft: false
