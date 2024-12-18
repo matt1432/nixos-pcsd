@@ -4,39 +4,34 @@
   # nix build inputs
   autoreconfHook,
   fetchFromGitHub,
-  runCommand,
+  nix-update-script,
   # misc tools
   coreutils,
   gawk,
   gnugrep,
   gnused,
-  lndir,
   # deps
-  drbd,
   glib,
   iproute2,
   libqb,
-  pacemaker,
   pkg-config,
   python3,
   ...
 }: let
-  inherit (lib) optionals removePrefix unsafeGetAttrPos versionAtLeast;
+  inherit (lib) concatStringsSep optionals versionAtLeast;
 
-  ocf-resource-agents-src = import ./src.nix;
+  pname = "resource-agents";
+  version = "4.16.0";
+in
+  stdenv.mkDerivation {
+    inherit pname version;
 
-  drbdForOCF = drbd.override {
-    forOCF = true;
-  };
-  pacemakerForOCF = pacemaker.override {
-    forOCF = true;
-  };
-
-  resource-agentsForOCF = stdenv.mkDerivation {
-    pname = "resource-agents";
-
-    src = fetchFromGitHub ocf-resource-agents-src;
-    version = removePrefix "v" ocf-resource-agents-src.rev;
+    src = fetchFromGitHub {
+      owner = "ClusterLabs";
+      repo = "resource-agents";
+      rev = "v${version}";
+      hash = "sha256-d8rZj01z0J5/CaIQwnqAwAdKErqrlL/RdbfS0/+aS2E=";
+    };
 
     patches = [./improve-command-detection.patch];
 
@@ -73,29 +68,14 @@
       sed -i -e "s|IP2UTIL:=ip|IP2UTIL:=${iproute2}/bin/ip}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
     '';
 
+    passthru.updateScript = concatStringsSep " " (nix-update-script {
+      extraArgs = ["--flake" pname];
+    });
+
     meta = {
       homepage = "https://github.com/ClusterLabs/resource-agents";
       description = "Combined repository of OCF agents from the RHCS and Linux-HA projects";
       license = lib.licenses.gpl2Plus;
       platforms = lib.platforms.linux;
     };
-  };
-in
-  # This combines together OCF definitions from other derivations.
-  # https://github.com/ClusterLabs/resource-agents/blob/master/doc/dev-guides/ra-dev-guide.asc
-  runCommand "ocf-resource-agents" {
-    # Fix derivation location so things like
-    #   $ nix edit -f. ocf-resource-agents
-    # just work.
-    pos = unsafeGetAttrPos "version" resource-agentsForOCF;
-
-    # Useful to build and undate inputs individually:
-    passthru.inputs = {
-      inherit resource-agentsForOCF drbdForOCF pacemakerForOCF;
-    };
-  } ''
-    mkdir -p $out/usr/lib/ocf
-    ${lndir}/bin/lndir -silent "${resource-agentsForOCF}/lib/ocf/" $out/usr/lib/ocf
-    ${lndir}/bin/lndir -silent "${drbdForOCF}/usr/lib/ocf/" $out/usr/lib/ocf
-    ${lndir}/bin/lndir -silent "${pacemakerForOCF}/usr/lib/ocf/" $out/usr/lib/ocf
-  ''
+  }

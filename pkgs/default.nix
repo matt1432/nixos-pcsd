@@ -17,8 +17,10 @@
     inherit ocf-resource-agents;
   };
 
-  ocf-resource-agents = pkgs.callPackage ./resource-agents {
-    inherit pacemaker;
+  resource-agents = pkgs.callPackage ./resource-agents {};
+
+  ocf-resource-agents = pkgs.callPackage ./ocf-resource-agents {
+    inherit pacemaker resource-agents;
   };
 
   default = pcs;
