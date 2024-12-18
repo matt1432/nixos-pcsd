@@ -1,18 +1,27 @@
 {
   buildNpmPackage,
   fetchFromGitHub,
+  nix-update-script,
   ...
 }: let
-  pcs-web-ui-src = import ./src.nix;
+  inherit (builtins) concatStringsSep;
+
+  pname = "pcs-web-ui";
+  version = "0.1.20";
 in
   buildNpmPackage {
-    pname = "pcs-web-ui";
-    version = pcs-web-ui-src.rev;
+    inherit pname version;
 
-    src = fetchFromGitHub pcs-web-ui-src;
     sourceRoot = "source/packages/app";
 
-    npmDepsHash = import ./npmDepsHash.nix;
+    src = fetchFromGitHub {
+      owner = "ClusterLabs";
+      repo = "pcs-web-ui";
+      rev = version;
+      hash = "sha256-ZEVYKnzVzfBYS6tE/n614d7humwDn+4rZ0JRnHo1BHU=";
+    };
+
+    npmDepsHash = "sha256-FJeewt4bqNO/mXym5VnNg7XP2oAv2D6XGfdZtSt9z2Y=";
 
     buildPhase = ''
       ./.bin/build.sh ./.
@@ -22,4 +31,8 @@ in
       mkdir -p $out/lib/pcsd/public
       cp -r ./build $out/lib/pcsd/public/ui/
     '';
+
+    passthru.updateScript = concatStringsSep " " (nix-update-script {
+      extraArgs = ["--flake" pname];
+    });
   }
