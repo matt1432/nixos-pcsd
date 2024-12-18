@@ -68,6 +68,7 @@ rec {
           nix-prefetch-git
           nix-prefetch-github
           nix-prefetch-scripts
+          nix-update
         ];
       };
 

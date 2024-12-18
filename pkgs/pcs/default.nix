@@ -23,10 +23,10 @@
   pcs-web-ui ? null,
   ...
 }: let
-  inherit (lib) getLib optionalString removePrefix;
+  inherit (lib) getLib optionalString;
 
-  pcs-src = import ./src.nix;
-  version = removePrefix "v" pcs-src.rev;
+  pname = "pcs";
+  version = "0.12.0b1";
 
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
@@ -35,12 +35,16 @@
   };
 in
   python3Packages.buildPythonPackage {
-    pname = "pcs";
-    inherit version;
+    inherit pname version;
 
     pyproject = true;
 
-    src = fetchFromGitHub pcs-src;
+    src = fetchFromGitHub {
+      owner = "ClusterLabs";
+      repo = "pcs";
+      rev = "v${version}";
+      hash = "sha256-5c1KwXJBvr9yeKYnt04V9M2v+mz7utlbpy820/GzE9o=";
+    };
 
     # Curl test assumes network access
     doCheck = false;
@@ -154,4 +158,6 @@ in
       rm -r $out/lib/pcsd/public/
       ln -s ${pcs-web-ui}/lib/pcsd/public $out/lib/pcsd/public
     '';
+
+    passthru.updateScript = ./update.sh;
   }
