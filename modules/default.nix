@@ -639,6 +639,13 @@ in {
             path = [cfg.finalPackage ocf-resource-agents];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
+
+            # FIXME: figure out why this unit takes too long to shutdown
+            serviceConfig = {
+              TimeoutStopSec = "5";
+              KillSignal = "SIGKILL";
+              RestartKillSignal = "SIGKILL";
+            };
           };
           "pcsd-ruby" = {
             path = [cfg.finalPackage ocf-resource-agents];
