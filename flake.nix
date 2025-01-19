@@ -13,22 +13,22 @@ rec {
       repo = "nixpkgs";
       ref = "nixos-unstable";
     };
+
+    systems = {
+      type = "github";
+      owner = "nix-systems";
+      repo = "default-linux";
+    };
   };
 
   outputs = {
     self,
+    systems,
     nixpkgs,
     ...
   } @ inputs: let
-    supportedSystems = [
-      "x86_64-linux"
-      "x86_64-darwin"
-      "aarch64-linux"
-      "aarch64-darwin"
-    ];
-
     perSystem = attrs:
-      nixpkgs.lib.genAttrs supportedSystems (system:
+      nixpkgs.lib.genAttrs (import systems) (system:
         attrs (import nixpkgs {inherit system;}));
   in {
     packages =
