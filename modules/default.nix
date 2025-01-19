@@ -5,8 +5,8 @@ self: nixConfig: {
   ...
 }: let
   inherit (lib) types literalExpression;
-  inherit (lib.attrsets) attrNames attrValues listToAttrs filterAttrs hasAttr mapAttrsToList;
-  inherit (lib.lists) all any elemAt findFirst length;
+  inherit (lib.attrsets) attrValues hasAttr listToAttrs;
+  inherit (lib.lists) all any elemAt filter length;
   inherit (lib.modules) mkForce mkIf;
   inherit (lib.options) mkEnableOption mkOption;
   inherit (lib.strings) hasInfix concatMapStringsSep concatStringsSep optionalString removePrefix replicate splitString toJSON trim;
@@ -30,18 +30,6 @@ self: nixConfig: {
     lines = splitString "\n" text;
   in
     concatMapStringsSep "\n" indentLine lines;
-
-  startDesc = after: ''
-    Determines what resources need to be started ${
-      if after
-      then "after"
-      else "before"
-    }
-    this one.\
-    Requires a group.\
-    Can only be the name of resources in the same group and cannot
-    be the name of this ressource.
-  '';
 in {
   disabledModules = [pacemakerPath];
   imports = [self.nixosModules.pacemaker];
@@ -178,7 +166,7 @@ in {
     systemdResources = mkOption {
       default = {};
       description = ''
-        An attribute set that represents all the systemd services that will
+        An ordered list of sets that represent all the systemd services that will
         be managed by pcsd.
       '';
       example = literalExpression ''
@@ -195,7 +183,7 @@ in {
           };
         }
       '';
-      type = types.attrsOf (types.submodule ({name, ...}: {
+      type = types.listOf (types.submodule ({...}: {
         options = {
           enable = mkOption {
             type = types.bool;
@@ -208,7 +196,6 @@ in {
 
           systemdName = mkOption {
             type = types.str;
-            default = name;
             description = ''
               The name of the systemd unit file without '.service'.\
               By default, this option will use the name of this attribute.
@@ -225,18 +212,6 @@ in {
             '';
           };
 
-          startAfter = mkOption {
-            type = with types; listOf str;
-            default = [];
-            description = startDesc true;
-          };
-
-          startBefore = mkOption {
-            type = with types; listOf str;
-            default = [];
-            description = startDesc false;
-          };
-
           extraArgs = mkOption {
             type = with types; listOf str;
             default = [];
@@ -251,7 +226,7 @@ in {
     virtualIps = mkOption {
       default = {};
       description = ''
-        An attribute set that represents all the virtual IPs that will
+        An ordered list of sets that represent all the virtual IPs that will
         be managed by pcsd.
       '';
       example = literalExpression ''
@@ -264,11 +239,18 @@ in {
           };
         }
       '';
-      type = types.attrsOf (types.submodule ({name, ...}: {
+      type = types.listOf (types.submodule ({...}: {
         options = {
+          enable = mkOption {
+            type = types.bool;
+            default = true;
+            description = ''
+              Whether this service is managed by pcs or not.
+            '';
+          };
+
           id = mkOption {
             type = types.str;
-            default = name;
             description = ''
               The name of the resource as pacemaker sees it.\
               By default, this option will use the name of this attribute.
@@ -302,18 +284,6 @@ in {
             '';
           };
 
-          startAfter = mkOption {
-            type = with types; listOf str;
-            default = [];
-            description = startDesc true;
-          };
-
-          startBefore = mkOption {
-            type = with types; listOf str;
-            default = [];
-            description = startDesc false;
-          };
-
           extraArgs = mkOption {
             type = with types; listOf str;
             default = [];
@@ -344,29 +314,13 @@ in {
   config = let
     # Important vars
     nodeNames = concatMapStringsSep " " (n: n.name) cfg.nodes;
-    resEnabled = (filterAttrs (n: v: v.enable) cfg.systemdResources) // cfg.virtualIps;
+    resEnabled = (filter (v: v.enable) cfg.virtualIps) ++ (filter (v: v.enable) cfg.systemdResources);
     tmpCib = "/tmp/pcsd/cib-new.xml";
 
     # Resource functions
     mkGroupCmd = resource: name:
-      concatStringsSep " " [
-        # Doesn't work when applying to tmpCib so no '-f'
-        "pcs resource group add ${resource.group} ${name}"
-
-        (optionalString
-          (length resource.startAfter != 0)
-          (concatMapStringsSep
-            " "
-            (r: "--after ${r}")
-            resource.startAfter))
-
-        (optionalString
-          (length resource.startBefore != 0)
-          (concatMapStringsSep
-            " "
-            (r: "--before ${r}")
-            resource.startBefore))
-      ];
+    # Doesn't work when applying to tmpCib so no '-f'
+    "pcs resource group add ${resource.group} ${name}";
 
     mkVirtIp = vip:
       concatStringsSep " " ([
@@ -406,45 +360,6 @@ in {
       concatMapStringsSep "\n"
       (c: "pcs -f ${tmpCib} ${removePrefix "pcs" c}")
       cfg.extraCommands;
-
-    resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
-    groupedRes = filterAttrs (n: v: v.group != null) resEnabled;
-    resourcesWithPositions =
-      mapAttrsToList (n: v: {
-        inherit (resourceTypeInfo v) name type group;
-        constraints = v.startAfter ++ v.startBefore;
-      })
-      groupedRes;
-
-    erroredResource =
-      # Find the first resource that has errors
-      findFirst (
-        resource:
-          !(
-            # For every startBefore and startAfter
-            all (
-              constraint:
-              # A constraint needs to have a corresponding resource name
-                any (resName: constraint == resName) resNames
-                # can't be its own resource name
-                && constraint != resource.name
-                # has to be in the same group
-                && (findFirst (r: r.name == constraint) {group = "";} resourcesWithPositions).group == resource.group
-            )
-            resource.constraints
-          )
-      )
-      null
-      resourcesWithPositions;
-
-    errorOnlyOneStart =
-      # Find a resource that has both startAfter and startBefore
-      findFirst (
-        resource:
-          resource.startAfter != [] && resource.startBefore != []
-      )
-      null
-      (attrValues resEnabled);
   in
     mkIf cfg.enable {
       assertions = [
@@ -473,24 +388,6 @@ in {
           message = ''
             The parameter `services.pcsd.mainNode` needs to be the name of
             an existing node in the cluster.
-          '';
-        }
-        {
-          # We want there to be no errRes to have a functioning config
-          assertion = erroredResource == null;
-          message = ''
-            The parameters in services.pcsd.${erroredResource.type}.${erroredResource.name}.<startAfter|startBefore>
-            need to correspond to the name of a virtualIP or a systemd resource that is a member
-            of the same group and cannot be "${erroredResource.name}".
-          '';
-        }
-        {
-          assertion = errorOnlyOneStart == null;
-          message = let
-            errInfo = resourceTypeInfo errorOnlyOneStart;
-          in ''
-            The parameters in services.pcsd.${errInfo.type}.${errInfo.name}
-            `startAfter` and `startBefore` are mutually exclusive.
           '';
         }
         {
@@ -545,10 +442,6 @@ in {
       systemd.packages = [cfg.finalPackage];
 
       systemd.services = let
-        # Abstract funcs
-        concatMapAttrsToString = func: attrs:
-          concatMapStringsSep "\n" func (attrValues attrs);
-
         # More resource funcs
         mkResource = resource:
           (resourceTypeInfo resource).createCmd;
@@ -559,31 +452,21 @@ in {
           optionalString
           (!(isNull resource.group))
           "pcs -f ${tmpCib} resource group add ${resource.group} ${resInfo.name}";
-
-        handlePosInGroup = resource: let
-          resInfo = resourceTypeInfo resource;
-        in
-          optionalString
-          (
-            !(isNull resource.group)
-            && (
-              resource.startAfter != [] || resource.startBefore != []
-            )
-          )
-          resInfo.groupCmd;
       in
         {
           "pcsd-setup" = {
-            path =
-              (with pkgs; [
-                shadow
-                jq
+            path = attrValues {
+              inherit pacemaker;
+
+              inherit (cfg) finalPackage;
+
+              inherit
+                (pkgs)
                 diffutils
-              ])
-              ++ [
-                pacemaker
-                cfg.finalPackage
-              ];
+                jq
+                shadow
+                ;
+            };
 
             script = ''
               # Set password on user on every node
@@ -629,16 +512,13 @@ in {
                 pcs -f ${tmpCib} property set stonith-enabled=false
                 pcs -f ${tmpCib} property set no-quorum-policy=ignore
               '')}
-              ${indentShellLines 4 (concatMapAttrsToString mkResource resEnabled)}
-              ${indentShellLines 4 (concatMapAttrsToString addToGroup resEnabled)}
+              ${indentShellLines 4 (concatMapStringsSep "\n" mkResource resEnabled)}
+              ${indentShellLines 4 (concatMapStringsSep "\n" addToGroup resEnabled)}
               ${indentShellLines 4 extraCommands}
 
                   # Apply diff between old and new config to current CIB
                   crm_diff --no-version -o /tmp/pcsd/cib-old.xml -n ${tmpCib} |
                   cibadmin --patch --xml-pipe
-
-                  # Group pos doesn't work in tmpCib so we apply it on current CIB
-              ${indentShellLines 4 (concatMapAttrsToString handlePosInGroup resEnabled)}
 
                   # Cleanup
                   rm -rf /tmp/pcsd
@@ -681,10 +561,10 @@ in {
         }
         # Force all systemd units handled by pacemaker to not start automatically
         // listToAttrs (map (x: {
-          name = x;
+          name = x.systemdName;
           value = {
             wantedBy = mkForce [];
           };
-        }) (attrNames cfg.systemdResources));
+        }) (filter (v: v.enable) cfg.systemdResources));
     };
 }
