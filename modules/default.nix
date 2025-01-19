@@ -416,7 +416,7 @@ in {
       })
       groupedRes;
 
-    errRes =
+    erroredResource =
       # Find the first resource that has errors
       findFirst (
         resource:
@@ -436,6 +436,15 @@ in {
       )
       null
       resourcesWithPositions;
+
+    errorOnlyOneStart =
+      # Find a resource that has both startAfter and startBefore
+      findFirst (
+        resource:
+          resource.startAfter != [] && resource.startBefore != []
+      )
+      null
+      (attrValues resEnabled);
   in
     mkIf cfg.enable {
       assertions = [
@@ -468,11 +477,20 @@ in {
         }
         {
           # We want there to be no errRes to have a functioning config
-          assertion = errRes == null;
+          assertion = erroredResource == null;
           message = ''
-            The parameters in services.pcsd.${errRes.type}.${errRes.name}.<startAfter|startBefore>
+            The parameters in services.pcsd.${erroredResource.type}.${erroredResource.name}.<startAfter|startBefore>
             need to correspond to the name of a virtualIP or a systemd resource that is a member
-            of the same group and cannot be "${errRes.name}".
+            of the same group and cannot be "${erroredResource.name}".
+          '';
+        }
+        {
+          assertion = errorOnlyOneStart == null;
+          message = let
+            errInfo = resourceTypeInfo errorOnlyOneStart;
+          in ''
+            The parameters in services.pcsd.${errInfo.type}.${errInfo.name}
+            `startAfter` and `startBefore` are mutually exclusive.
           '';
         }
         {
