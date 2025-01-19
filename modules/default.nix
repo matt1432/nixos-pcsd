@@ -9,7 +9,7 @@ self: nixConfig: {
   inherit (lib.lists) all any elemAt findFirst length;
   inherit (lib.modules) mkForce mkIf;
   inherit (lib.options) mkEnableOption mkOption;
-  inherit (lib.strings) hasInfix concatMapStringsSep concatStringsSep optionalString removePrefix toJSON;
+  inherit (lib.strings) hasInfix concatMapStringsSep concatStringsSep optionalString removePrefix replicate splitString toJSON trim;
 
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
@@ -21,6 +21,15 @@ self: nixConfig: {
     pcs-web-ui
     pcs
     ;
+
+  indentShellLines = n: text: let
+    indentLine = line:
+      if line == ""
+      then ""
+      else "${replicate n " "}${trim line}";
+    lines = splitString "\n" text;
+  in
+    concatMapStringsSep "\n" indentLine lines;
 
   startDesc = after: ''
     Determines what resources need to be started ${
@@ -393,10 +402,10 @@ in {
         groupCmd = mkGroupCmd resource resource.systemdName;
       };
 
-    extraCommands = concatMapStringsSep "\n" (c: let
-      cmd = removePrefix "pcs" c;
-    in "pcs -f ${tmpCib} ${cmd}")
-    cfg.extraCommands;
+    extraCommands =
+      concatMapStringsSep "\n"
+      (c: "pcs -f ${tmpCib} ${removePrefix "pcs" c}")
+      cfg.extraCommands;
 
     resNames = mapAttrsToList (n: v: (resourceTypeInfo v).name) resEnabled;
     groupedRes = filterAttrs (n: v: v.group != null) resEnabled;
@@ -489,9 +498,7 @@ in {
         nodelist = mkForce cfg.nodes;
       };
 
-      environment.etc."corosync/authkey" = {
-        source = cfg.corosyncKeyFile;
-      };
+      environment.etc."corosync/authkey".source = cfg.corosyncKeyFile;
 
       # PCS
       security.pam.services.pcsd.text = ''
@@ -518,6 +525,7 @@ in {
       users.groups.haclient = {};
 
       systemd.packages = [cfg.finalPackage];
+
       systemd.services = let
         # Abstract funcs
         concatMapAttrsToString = func: attrs:
@@ -561,34 +569,35 @@ in {
 
             script = ''
               # Set password on user on every node
-              echo hacluster:$(cat ${cfg.clusterUserPasswordFile}) | chpasswd
+              echo hacluster:"$(cat ${cfg.clusterUserPasswordFile})" | chpasswd
 
               # The config needs to be installed from one node only
               if [ "$(uname -n)" = "${cfg.mainNode}" ]; then
                   # Check for first run
                   if ! pcs status; then
                       pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                  else
+                      # We want to reset the cluster completely if
+                      # there are any changes in the corosync config
+                      # to make sure it is setup correctly
+                      CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '[.["nodes"] | .[] | .ring_addrs = (.addrs | map(.addr)) | del(.addrs) | .nodeid = (.nodeid | tonumber)]')
+                      CONFIG_NODES=$(echo '${toJSON cfg.nodes}' | jq --sort-keys)
 
-                  # We want to reset the cluster completely if
-                  # there are any changes in the corosync config
-                  # to make sure it is setup correctly
-                  CURRENT_NODES=$(pcs cluster config --output-format json | jq --sort-keys '[.["nodes"] | .[] | .ring_addrs = (.addrs | map(.addr)) | del(.addrs) | .nodeid = (.nodeid | tonumber)]')
-                  CONFIG_NODES=$(echo '${toJSON cfg.nodes}' | jq --sort-keys)
+                      # Same thing if the name changes
+                      CURRENT_NAME=$(pcs cluster config --output-format json | jq '.["cluster_name"]')
+                      CONFIG_NAME="\"${cfg.clusterName}\""
 
-                  # Same thing if the name changes
-                  CURRENT_NAME=$(pcs cluster config --output-format json | jq '.["cluster_name"]')
-                  CONFIG_NAME="\"${cfg.clusterName}\""
-
-                  elif ! cmp -s <(echo "$CURRENT_NODES") <(echo "$CONFIG_NODES") ||
-                       ! cmp -s <(echo "$CURRENT_NAME") <(echo "$CONFIG_NAME"); then
-                      echo "Resetting cluster"
-                      pcs stop
-                      pcs destroy
-                      pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                      if ! cmp -s <(echo "$CURRENT_NODES") <(echo "$CONFIG_NODES") ||
+                         ! cmp -s <(echo "$CURRENT_NAME") <(echo "$CONFIG_NAME"); then
+                          echo "Resetting cluster"
+                          pcs stop
+                          pcs destroy
+                          pcs cluster setup ${cfg.clusterName} ${nodeNames} --start --enable
+                      fi
                   fi
 
                   # Auth every node
-                  pcs host auth ${nodeNames} -u hacluster -p $(cat ${cfg.clusterUserPasswordFile})
+                  pcs host auth ${nodeNames} -u hacluster -p "$(cat ${cfg.clusterUserPasswordFile})"
 
                   # Delete files from potential failed runs
                   rm -rf /tmp/pcsd
@@ -598,20 +607,20 @@ in {
                   cibadmin --query > /tmp/pcsd/cib-old.xml
 
                   # Setup tmpCib
-              ${optionalString (length cfg.nodes <= 2) ''
+              ${optionalString (length cfg.nodes <= 2) (indentShellLines 4 ''
                 pcs -f ${tmpCib} property set stonith-enabled=false
                 pcs -f ${tmpCib} property set no-quorum-policy=ignore
-              ''}
-              ${concatMapAttrsToString mkResource resEnabled}
-              ${concatMapAttrsToString addToGroup resEnabled}
-              ${extraCommands}
+              '')}
+              ${indentShellLines 4 (concatMapAttrsToString mkResource resEnabled)}
+              ${indentShellLines 4 (concatMapAttrsToString addToGroup resEnabled)}
+              ${indentShellLines 4 extraCommands}
 
                   # Apply diff between old and new config to current CIB
                   crm_diff --no-version -o /tmp/pcsd/cib-old.xml -n ${tmpCib} |
                   cibadmin --patch --xml-pipe
 
                   # Group pos doesn't work in tmpCib so we apply it on current CIB
-              ${concatMapAttrsToString handlePosInGroup resEnabled}
+              ${indentShellLines 4 (concatMapAttrsToString handlePosInGroup resEnabled)}
 
                   # Cleanup
                   rm -rf /tmp/pcsd
