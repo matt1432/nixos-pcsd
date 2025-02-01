@@ -24,12 +24,12 @@ in
     npmDepsHash = "sha256-MMR74EdKR0dc4Qp5RKrxtbCrIVS64OIYwVBBJuRIbmU=";
 
     buildPhase = ''
-      ./.bin/build.sh ./.
+      ./.bin/build/main.sh ./. node_modules ./build
     '';
 
     installPhase = ''
       mkdir -p $out/lib/pcsd/public
-      cp -r ./build $out/lib/pcsd/public/ui/
+      cp -r ./build/for-standalone $out/lib/pcsd/public/ui/
     '';
 
     passthru.updateScript = concatStringsSep " " (nix-update-script {
