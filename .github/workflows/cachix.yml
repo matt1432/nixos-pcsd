@@ -11,8 +11,8 @@ jobs:
       with:
         submodules: recursive
 
-    - uses: cachix/install-nix-action@v27
-    - uses: DeterminateSystems/magic-nix-cache-action@main
+    - uses: cachix/install-nix-action@v30
+    - uses: DeterminateSystems/flakehub-cache-action@main
     - uses: cachix/cachix-action@v15
       with:
         name: pcsd
