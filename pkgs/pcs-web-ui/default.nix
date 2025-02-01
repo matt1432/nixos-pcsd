@@ -7,7 +7,7 @@
   inherit (builtins) concatStringsSep;
 
   pname = "pcs-web-ui";
-  version = "0.1.20";
+  version = "0.1.22";
 in
   buildNpmPackage {
     inherit pname version;
@@ -18,10 +18,10 @@ in
       owner = "ClusterLabs";
       repo = "pcs-web-ui";
       rev = version;
-      hash = "sha256-ZEVYKnzVzfBYS6tE/n614d7humwDn+4rZ0JRnHo1BHU=";
+      hash = "sha256-qnqp7cqCI0J3PQB1uOXkbNWM/ZAwX2FEdmNZlaFyhmM=";
     };
 
-    npmDepsHash = "sha256-FJeewt4bqNO/mXym5VnNg7XP2oAv2D6XGfdZtSt9z2Y=";
+    npmDepsHash = "sha256-MMR74EdKR0dc4Qp5RKrxtbCrIVS64OIYwVBBJuRIbmU=";
 
     buildPhase = ''
       ./.bin/build.sh ./.
