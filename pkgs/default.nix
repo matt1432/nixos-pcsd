@@ -1,27 +1,13 @@
-{
-  self,
-  pkgs,
-  ...
-}: rec {
-  docs = pkgs.callPackage ../docs {inherit self;};
+final: prev: {
+  pyagentx = final.callPackage ./pyagentx {};
 
-  pyagentx = pkgs.callPackage ./pyagentx {};
+  pcs = final.callPackage ./pcs {};
 
-  pcs = pkgs.callPackage ./pcs {
-    inherit pacemaker pyagentx;
-  };
+  pcs-web-ui = final.callPackage ./pcs-web-ui {};
 
-  pcs-web-ui = pkgs.callPackage ./pcs-web-ui {};
+  pacemaker = final.callPackage ./pacemaker {};
 
-  pacemaker = pkgs.callPackage ./pacemaker {
-    inherit ocf-resource-agents;
-  };
+  resource-agents = final.callPackage ./resource-agents {};
 
-  resource-agents = pkgs.callPackage ./resource-agents {};
-
-  ocf-resource-agents = pkgs.callPackage ./ocf-resource-agents {
-    inherit pacemaker resource-agents;
-  };
-
-  default = pcs;
+  ocf-resource-agents = final.callPackage ./ocf-resource-agents {};
 }

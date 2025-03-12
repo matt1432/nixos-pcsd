@@ -26,14 +26,33 @@ rec {
     systems,
     nixpkgs,
     ...
-  } @ inputs: let
+  }: let
     perSystem = attrs:
       nixpkgs.lib.genAttrs (import systems) (system:
-        attrs (import nixpkgs {inherit system;}));
+        attrs (import nixpkgs {
+          inherit system;
+          overlays = [self.overlays.default];
+        }));
   in {
-    packages =
-      perSystem (pkgs:
-        import ./pkgs ({inherit self pkgs;} // inputs));
+    packages = perSystem (pkgs: rec {
+      default = pcs;
+      docs = pkgs.callPackage ./docs {inherit self;};
+
+      inherit
+        (pkgs)
+        pyagentx
+        pcs
+        pcs-web-ui
+        pacemaker
+        resource-agents
+        ocf-resource-agents
+        ;
+    });
+
+    overlays = {
+      pcsd = import ./pkgs;
+      default = self.overlays.pcsd;
+    };
 
     nixosModules = {
       pacemaker = import ./modules/pacemaker.nix self;

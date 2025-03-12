@@ -6,15 +6,13 @@ self: {
 }: let
   inherit (lib) mkEnableOption mkIf mkPackageOption;
 
-  inherit (self.packages.${pkgs.system}) ocf-resource-agents;
-
   cfg = config.services.pacemaker;
 in {
   # interface
   options.services.pacemaker = {
     enable = mkEnableOption "pacemaker";
 
-    package = mkPackageOption self.packages.${pkgs.system} "pacemaker" {};
+    package = mkPackageOption pkgs "pacemaker" {};
   };
 
   # implementation
@@ -28,7 +26,9 @@ in {
       }
     ];
 
-    environment.systemPackages = [cfg.package ocf-resource-agents pkgs.iproute2];
+    nixpkgs.overlays = [self.overlays.default];
+
+    environment.systemPackages = [cfg.package pkgs.ocf-resource-agents pkgs.iproute2];
 
     # required by pacemaker
     users.users.hacluster = {
@@ -45,7 +45,7 @@ in {
     systemd.packages = [cfg.package];
     systemd.services.pacemaker = {
       wantedBy = ["multi-user.target"];
-      path = [pkgs.coreutils pkgs.iproute2 ocf-resource-agents];
+      path = with pkgs; [coreutils iproute2 ocf-resource-agents];
       serviceConfig = {
         ExecStartPost = "${pkgs.coreutils}/bin/chown -R hacluster:pacemaker /var/lib/pacemaker";
         StateDirectory = "pacemaker";

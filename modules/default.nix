@@ -14,14 +14,6 @@ self: nixConfig: {
   pacemakerPath = "services/cluster/pacemaker/default.nix";
   cfg = config.services.pcsd;
 
-  inherit
-    (self.packages.${pkgs.system})
-    ocf-resource-agents
-    pacemaker
-    pcs-web-ui
-    pcs
-    ;
-
   indentShellLines = n: text: let
     indentLine = line:
       if line == ""
@@ -112,7 +104,7 @@ in {
     # PCS options
     package = mkOption {
       type = types.package;
-      default = pcs;
+      default = pkgs.pcs;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.default";
       description = ''
         The pcs package to use.\
@@ -148,7 +140,7 @@ in {
 
     webUIPackage = mkOption {
       type = types.package;
-      default = pcs-web-ui;
+      default = pkgs.pcs-web-ui;
       defaultText = literalExpression "pcsd.packages.x86_64-linux.pcs-web-ui";
       description = ''
         The pcs webUI package to use.\
@@ -398,6 +390,8 @@ in {
         }
       ];
 
+      nixpkgs.overlays = [self.overlays.default];
+
       nix.settings = mkIf cfg.enableBinaryCache {
         substituters = nixConfig.extra-substituters;
         trusted-public-keys = nixConfig.extra-trusted-public-keys;
@@ -426,8 +420,8 @@ in {
 
       environment.systemPackages = [
         cfg.finalPackage
-        ocf-resource-agents
-        pacemaker
+        pkgs.ocf-resource-agents
+        pkgs.pacemaker
       ];
 
       # This user is created in the pacemaker service.
@@ -456,14 +450,13 @@ in {
         {
           "pcsd-setup" = {
             path = attrValues {
-              inherit pacemaker;
-
               inherit (cfg) finalPackage;
 
               inherit
                 (pkgs)
                 diffutils
                 jq
+                pacemaker
                 shadow
                 ;
             };
@@ -543,7 +536,7 @@ in {
           };
 
           "pcsd" = {
-            path = [cfg.finalPackage ocf-resource-agents];
+            path = [cfg.finalPackage pkgs.ocf-resource-agents];
             # The upstream service already defines this, but doesn't get applied.
             wantedBy = ["multi-user.target"];
 
@@ -555,7 +548,7 @@ in {
             };
           };
           "pcsd-ruby" = {
-            path = [cfg.finalPackage ocf-resource-agents];
+            path = [cfg.finalPackage pkgs.ocf-resource-agents];
             preStart = "mkdir -p /var/{lib/pcsd,log/pcsd}";
           };
         }
