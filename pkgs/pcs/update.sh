@@ -3,31 +3,30 @@
 ARGS=("$@")
 
 getLatest() {
-    type="$1"
+    major_ver="$1"
     owner="$2"
     repo="$3"
 
-    case "$type" in
-        release)
-            curl -s "https://api.github.com/repos/$owner/$repo/releases/latest" | jq -r .tag_name
-        ;;
+    declare -a versions
+    readarray -t versions <<< "$(curl -s "https://api.github.com/repos/$owner/$repo/releases" | jq -r 'map(.tag_name)[]')"
 
-        prerelease)
-            curl -s "https://api.github.com/repos/$owner/$repo/releases" |
-                jq -r 'map(.tag_name)[]' |
-                sort -r |
-                head -n 1
-        ;;
-    esac
+    regex_pattern="^$major_ver.*"
+
+    for version in "${versions[@]}"; do
+        if [[ "$version" =~ $regex_pattern ]]; then
+            echo "$version"
+            return
+        fi
+    done
 }
 
 updatePackage() {
-    versionType="$1"
+    major_ver="$1"
     owner="$2"
     repo="$3"
 
     current_version=$(nix eval --raw ".#$repo.version")
-    new_version=$(getLatest "$versionType" "$owner" "$repo")
+    new_version=$(getLatest "$major_ver" "$owner" "$repo")
 
     if [[ "$new_version" != "$current_version" ]]; then
         updateGems
@@ -36,4 +35,4 @@ updatePackage() {
     fi
 }
 
-updatePackage "prerelease" "ClusterLabs" "pcs" # TODO: move to release once 0.12 comes out
+updatePackage "v0.12" "ClusterLabs" "pcs"
