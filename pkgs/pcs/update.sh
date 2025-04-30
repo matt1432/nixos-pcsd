@@ -43,7 +43,7 @@ updatePackage() {
 
         if [[ "$do_commit" == "true" ]]; then
             git add ./flake.lock ./pkgs/pcs
-            git commit -m "pcs: $current_version -> $new_version"
+            git commit -m "pcs: $current_version -> $(nix eval --raw ".#$repo.version")"
         fi
     fi
 }
