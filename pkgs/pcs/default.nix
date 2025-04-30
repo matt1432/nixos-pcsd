@@ -26,7 +26,7 @@
   inherit (lib) getLib optionalString;
 
   pname = "pcs";
-  version = "0.12.0.1";
+  version = "0.12.0.2";
 
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
@@ -43,7 +43,7 @@ in
       owner = "ClusterLabs";
       repo = "pcs";
       rev = "v${version}";
-      hash = "sha256-Y72MEczoSuWafNLDu05sWU6Cq+TiaDqMrEM+GWKpjjY=";
+      hash = "sha256-vhG7GrkwC4/4CXbaSbEVUdMt8h0e8d5l5dmvkyUmrHk=";
     };
 
     # Curl test assumes network access
