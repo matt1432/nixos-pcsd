@@ -28,7 +28,7 @@ updatePackage() {
     current_version=$(nix eval --raw ".#$repo.version")
     new_version=$(getLatest "$major_ver" "$owner" "$repo")
 
-    if [[ "$new_version" != "$current_version" ]]; then
+    if [[ "$new_version" != "v$current_version" ]]; then
         do_commit="false"
 
         for i in "${!ARGS[@]}"; do
