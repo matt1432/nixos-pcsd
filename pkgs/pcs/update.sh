@@ -29,9 +29,22 @@ updatePackage() {
     new_version=$(getLatest "$major_ver" "$owner" "$repo")
 
     if [[ "$new_version" != "$current_version" ]]; then
-        updateGems
+        do_commit="false"
 
+        for i in "${!ARGS[@]}"; do
+            if [[ ${ARGS[i]} = "--commit" ]]; then
+                unset 'array[i]'
+                do_commit="true"
+            fi
+        done
+
+        updateGems
         nix-update --version "$new_version" --flake pcs "${ARGS[@]}"
+
+        if [[ "$do_commit" == "true" ]]; then
+            git add ./flake.lock ./pkgs/pcs
+            git commit -m "pcs: $current_version -> $new_version"
+        fi
     fi
 }
 
