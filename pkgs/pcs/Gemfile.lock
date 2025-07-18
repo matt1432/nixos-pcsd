@@ -2,7 +2,7 @@ GEM
   remote: https://rubygems.org/
   specs:
     backports (3.25.1)
-    base64 (0.2.0)
+    base64 (0.3.0)
     childprocess (5.1.0)
       logger (~> 1.5)
     ethon (0.16.0)
@@ -18,7 +18,7 @@ GEM
     ffi (1.17.2-x86_64-darwin)
     ffi (1.17.2-x86_64-linux-gnu)
     ffi (1.17.2-x86_64-linux-musl)
-    json (2.11.3)
+    json (2.13.0)
     logger (1.7.0)
     mustermann (3.0.3)
       ruby2_keywords (~> 0.0.1)
@@ -26,12 +26,12 @@ GEM
     power_assert (2.0.5)
     puma (6.6.0)
       nio4r (~> 2.0)
-    rack (3.1.13)
+    rack (3.1.16)
     rack-protection (4.1.1)
       base64 (>= 0.1.0)
       logger (>= 1.6.0)
       rack (>= 3.0.0, < 4)
-    rack-session (2.1.0)
+    rack-session (2.1.1)
       base64 (>= 0.1.0)
       rack (>= 3.0.0)
     rack-test (2.2.0)
@@ -47,9 +47,9 @@ GEM
       rack-protection (= 4.1.1)
       rack-session (>= 2.0.0, < 3)
       tilt (~> 2.0)
-    test-unit (3.6.8)
+    test-unit (3.7.0)
       power_assert
-    tilt (2.6.0)
+    tilt (2.6.1)
 
 PLATFORMS
   aarch64-linux-gnu
@@ -87,4 +87,4 @@ DEPENDENCIES
   tilt
 
 BUNDLED WITH
-   2.6.6
+   2.6.9
