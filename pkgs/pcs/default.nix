@@ -26,7 +26,7 @@
   inherit (lib) getLib optionalString;
 
   pname = "pcs";
-  version = "0.12.1";
+  version = "";
 
   rubyEnv = bundlerEnv {
     name = "pcs-env-${version}";
