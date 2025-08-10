@@ -1,11 +1,8 @@
 {
   buildNpmPackage,
   fetchFromGitHub,
-  nix-update-script,
   ...
 }: let
-  inherit (builtins) concatStringsSep;
-
   pname = "pcs-web-ui";
   version = "0.1.23";
 in
@@ -31,8 +28,4 @@ in
       mkdir -p $out/lib/pcsd/public
       cp -r ./build/for-standalone $out/lib/pcsd/public/ui/
     '';
-
-    passthru.updateScript = concatStringsSep " " (nix-update-script {
-      extraArgs = ["--flake" pname];
-    });
   }

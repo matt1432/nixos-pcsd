@@ -3,7 +3,6 @@
   stdenv,
   # nix build inputs
   fetchFromGitHub,
-  nix-update-script,
   # deps
   autoconf,
   automake,
@@ -26,7 +25,7 @@
   ocf-resource-agents,
   ...
 }: let
-  inherit (lib) concatStringsSep optionals;
+  inherit (lib) optionals;
 
   pname = "pacemaker";
   version = "3.0.0";
@@ -93,10 +92,6 @@ in
       mv $out$out/* $out
       rm -r $out/nix
     '';
-
-    passthru.updateScript = concatStringsSep " " (nix-update-script {
-      extraArgs = ["--flake" pname];
-    });
 
     meta = {
       homepage = "https://clusterlabs.org/pacemaker/";

@@ -11,15 +11,15 @@ if [[ "$1" == "--commit" ]]; then
 
     nix flake update
 
-    updatePackage "pacemaker" --commit
+    nix-update --flake "pacemaker" --commit
     updatePackage "pcs" --commit
-    updatePackage "pcs-web-ui" --commit
-    updatePackage "resource-agents" --commit
+    nix-update --flake "pcs-web-ui" --commit
+    nix-update --flake "resource-agents" --commit
 
     git restore .
 else
-    updatePackage "pacemaker"
+    nix-update --flake "pacemaker"
     updatePackage "pcs"
-    updatePackage "pcs-web-ui"
-    updatePackage "resource-agents"
+    nix-update --flake "pcs-web-ui"
+    nix-update --flake "resource-agents"
 fi

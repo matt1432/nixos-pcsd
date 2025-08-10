@@ -4,7 +4,6 @@
   # nix build inputs
   autoreconfHook,
   fetchFromGitHub,
-  nix-update-script,
   # misc tools
   coreutils,
   gawk,
@@ -18,7 +17,7 @@
   python3,
   ...
 }: let
-  inherit (lib) concatStringsSep optionals versionAtLeast;
+  inherit (lib) optionals versionAtLeast;
 
   pname = "resource-agents";
   version = "4.16.0";
@@ -67,10 +66,6 @@ in
       sed -i -e "s|AWK:=.*|AWK:=${gawk}/bin/awk}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
       sed -i -e "s|IP2UTIL:=ip|IP2UTIL:=${iproute2}/bin/ip}|" $out/lib/ocf/lib/heartbeat/ocf-binaries
     '';
-
-    passthru.updateScript = concatStringsSep " " (nix-update-script {
-      extraArgs = ["--flake" pname];
-    });
 
     meta = {
       homepage = "https://github.com/ClusterLabs/resource-agents";
