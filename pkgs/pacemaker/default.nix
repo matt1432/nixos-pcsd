@@ -28,7 +28,7 @@
   inherit (lib) optionals;
 
   pname = "pacemaker";
-  version = "3.0.0";
+  version = "3.0.1";
 in
   stdenv.mkDerivation {
     inherit pname version;
@@ -37,7 +37,7 @@ in
       owner = "ClusterLabs";
       repo = "pacemaker";
       rev = "Pacemaker-${version}";
-      hash = "sha256-2Uj81hWNig30baS9a9Uc0+T1lZuADtcSDmn/TX5koL8=";
+      hash = "sha256-23YkNzqiimLy/KjO+hxVQQ4rUhSEhn5Oc2jUJO/VRo0=";
     };
 
     nativeBuildInputs = [
