@@ -99,11 +99,11 @@ in
       ]
       ++ (with python3Packages; [
         cryptography
-        dateutil
+        python-dateutil
         lxml
         pycurl
         setuptools
-        setuptools_scm
+        setuptools-scm
         pyparsing
         tornado
         dacite
@@ -141,7 +141,7 @@ in
       ++ (with python3Packages; [
         pip
         setuptools
-        setuptools_scm
+        setuptools-scm
         wheel
       ]);
 
