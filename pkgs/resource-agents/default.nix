@@ -20,7 +20,7 @@
   inherit (lib) optionals versionAtLeast;
 
   pname = "resource-agents";
-  version = "4.16.0";
+  version = "4.17.0";
 in
   stdenv.mkDerivation {
     inherit pname version;
@@ -29,7 +29,7 @@ in
       owner = "ClusterLabs";
       repo = "resource-agents";
       rev = "v${version}";
-      hash = "sha256-d8rZj01z0J5/CaIQwnqAwAdKErqrlL/RdbfS0/+aS2E=";
+      hash = "sha256-xwDK2SF8sCtZpYfY/c8j9xah3HNCNmsezw6hWMvp+N8=";
     };
 
     patches = [./improve-command-detection.patch];
