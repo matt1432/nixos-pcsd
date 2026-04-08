@@ -4,7 +4,7 @@
   ...
 }: let
   pname = "pcs-web-ui";
-  version = "0.1.24.2";
+  version = "0.1.24.3";
 in
   buildNpmPackage {
     inherit pname version;
@@ -15,10 +15,10 @@ in
       owner = "ClusterLabs";
       repo = "pcs-web-ui";
       rev = version;
-      hash = "sha256-vluZpMQKGZ1HQFhnd4TY0b3zEWGHP9p7rQxYp9nx1CQ=";
+      hash = "sha256-1yyIgtW8cA5Y2oU/4JJ8kKNIteO1qvWmhmJt90EsnE0=";
     };
 
-    npmDepsHash = "sha256-ASGie+blptUeCgpZqPpfeGAd+Nd/4TaM09ob8AlXiH8=";
+    npmDepsHash = "sha256-cdRNdXnrVsUsd0cErgeJ3Zo3a6l3KczadqVoTT3MCK0=";
 
     buildPhase = ''
       ./.bin/build/main.sh ./. node_modules ./build
