@@ -25,18 +25,20 @@
   ocf-resource-agents,
   ...
 }: let
-  inherit (lib) optionals;
+  inherit (lib) optionals removePrefix;
 
   pname = "pacemaker";
-  version = "3.0.2";
+  version = "Pacemaker-3.0.2";
 in
   stdenv.mkDerivation {
-    inherit pname version;
+    inherit pname;
+
+    version = removePrefix "Pacemaker-" version;
 
     src = fetchFromGitHub {
       owner = "ClusterLabs";
       repo = "pacemaker";
-      rev = "Pacemaker-${version}";
+      rev = version;
       hash = "sha256-Vpc4xr3Dq73jJdW0bG17pDt4d8LxQLJp14zpIamIIME=";
     };
 
