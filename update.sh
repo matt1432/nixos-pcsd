@@ -35,17 +35,17 @@ updatePackage() {
         nix-update --version "$new_version" --flake "$repo"
 
         if [[ "$do_commit" != "false" ]]; then
-            git add ./flake.lock "./pkgs/$repo"
+            git add "./pkgs/$repo"
             git commit -m "$repo: $current_version -> $(nix eval --raw ".#$repo.version")"
         fi
     fi
 }
 
 if [[ "$1" == "--commit" ]]; then
+    head_before=$(git rev-parse HEAD)
+
     git config --global user.name 'github-actions[bot]'
     git config --global user.email '41898282+github-actions[bot]@users.noreply.github.com'
-
-    nix flake update
 
     updatePackage "Pacemaker-3" "ClusterLabs" "pacemaker" --commit
     updatePackage "v0.12" "ClusterLabs" "pcs" --commit
@@ -53,6 +53,11 @@ if [[ "$1" == "--commit" ]]; then
     nix-update --flake "resource-agents" --commit
 
     git restore .
+
+    if [[ "$(git rev-parse HEAD)" != "$head_before" ]]; then
+        nix flake update
+        git commit -am "chore: update flake.lock"
+    fi
 else
     updatePackage "Pacemaker-3" "ClusterLabs" "pacemaker"
     updatePackage "v0.12" "ClusterLabs" "pcs"
