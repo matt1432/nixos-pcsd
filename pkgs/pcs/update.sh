@@ -38,12 +38,15 @@ updatePackage() {
             fi
         done
 
-        updateGems
-        nix-update --version "$new_version" --flake pcs "${ARGS[@]}"
+        if [[ "$repo" = "pcs" ]]; then
+            updateGems
+        fi
+
+        nix-update --version "$new_version" --flake "$repo" "${ARGS[@]}"
 
         if [[ "$do_commit" == "true" ]]; then
-            git add ./flake.lock ./pkgs/pcs
-            git commit -m "pcs: $current_version -> $(nix eval --raw ".#$repo.version")"
+            git add ./flake.lock "./pkgs/$repo"
+            git commit -m "$repo: $current_version -> $(nix eval --raw ".#$repo.version")"
         fi
     fi
 }
