@@ -5,7 +5,7 @@
 }:
 python3Packages.buildPythonPackage {
   pname = "pyagentx";
-  version = "0.0.0+8fcc2f05";
+  version = "0.4.1";
 
   pyproject = true;
   build-system = with python3Packages; [setuptools];
