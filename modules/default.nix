@@ -297,7 +297,7 @@ in {
       '';
       example = literalExpression ''
         [
-          "pcs property set stonith-enabled=false"
+          "pcs property set fencing-enabled=false"
         ]
       '';
     };
@@ -502,7 +502,7 @@ in {
 
                   # Setup tmpCib
               ${optionalString (length cfg.nodes <= 2) (indentShellLines 4 ''
-                pcs -f ${tmpCib} property set stonith-enabled=false
+                pcs -f ${tmpCib} property set fencing-enabled=false
                 pcs -f ${tmpCib} property set no-quorum-policy=ignore
               '')}
               ${indentShellLines 4 (concatMapStringsSep "\n" mkResource resEnabled)}
